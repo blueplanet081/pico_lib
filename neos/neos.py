@@ -2,11 +2,16 @@ import gc
 import time
 import network
 import sys
+import machine
 
 def help():
     print("show_memory_info() : Display memory usage")
+    print("show_version() : Display MicroPython interpreter version")
+    print("show_implementation() : Display MicroPython implementation")
+    print("show_unique_id() : Display unique id of machine")
     print("run(filename) : Execute a program on Pico")
     print("delete_module(modulename='neos') : Remove imported module")
+    print()
     print("wlan_connect() : Connect to a specified wireless network")
     print("wlan_isconnected() : Check if connected to a wireless network")
     print("wlan_disconnect() : Disconnect from a wireless network")
@@ -25,6 +30,18 @@ def show_memory_info():
     print(f"  use:    {use:8,} bytes  ({use/total*100:.2}%)")
     print(f"  remain: {remain:8,} bytes")
 
+def show_version():
+    ''' MicroPythonのバージョン情報を表示 '''
+    print(f"{sys.version=}")
+
+def show_implementation():
+    ''' MicroPythonの実装情報を表示 '''
+    print(f"{sys.implementation=}")
+
+def show_unique_id():
+    ''' 固有IDを表示 '''
+    id = machine.unique_id()
+    print(f"machine.unique_id()={id}(0x{id.hex()})")
 
 def run(filename):
     ''' pico上のプログラムを実行 '''
@@ -46,16 +63,21 @@ def delete_module(modulename='neos'):
 
 def wlan_connect():
     ''' 指定のワイヤレスネットワークに接続する '''
-    ssid = const("YOUR_SSID")           # 接続するWi-FiのSSID
-    passwd = const("YOUR_PASSWORD")     # 接続するWi-Fiのパスワード
+    import wlan_info as info
+    ssid = info.ssid
+    passwd = info.passwd
 
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     print(f"try to connect {ssid=} {passwd=}")
     wlan.connect(ssid, passwd)
 
-    # 接続完了まで待機
+    count = 0
     while not wlan.isconnected():
+        if count >= 10:
+            print("Can't connect to Wi-Fi")
+            return
+        count += 1
         print('Connecting to Wi-Fi...')
         time.sleep(1)
 
