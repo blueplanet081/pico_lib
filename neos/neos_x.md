@@ -29,21 +29,21 @@
 
 # 関数一覧 <!-- omit in toc -->
 
-- [1. 　help()　関数一覧を表示](#1-help関数一覧を表示)
-- [2. 　show\_memory\_info()　メモリの使用状況を表示](#2-show_memory_infoメモリの使用状況を表示)
-- [3. 　show\_version()　MicroPythonのバージョン情報を表示](#3-show_versionmicropythonのバージョン情報を表示)
-- [4. 　show\_implementation()　MicroPythonの実装情報を表示](#4-show_implementationmicropythonの実装情報を表示)
-- [5. 　show\_unique\_id()　固有IDを表示](#5-show_unique_id固有idを表示)
-- [6. 　run()　pico上のプログラムを実行](#6-runpico上のプログラムを実行)
+- [1. 　help()　関数一覧を表示する](#1-help関数一覧を表示する)
+- [2. 　show\_memory\_info()　メモリの使用状況を表示する](#2-show_memory_infoメモリの使用状況を表示する)
+- [3. 　show\_version()　MicroPythonのバージョン情報を表示する](#3-show_versionmicropythonのバージョン情報を表示する)
+- [4. 　show\_implementation()　MicroPythonの実装情報を表示する](#4-show_implementationmicropythonの実装情報を表示する)
+- [5. 　show\_unique\_id()　固有IDを表示する](#5-show_unique_id固有idを表示する)
+- [6. 　run()　pico上のプログラムを実行する](#6-runpico上のプログラムを実行する)
 - [7. 　delete\_module()　importしたモジュールを削除する](#7-delete_moduleimportしたモジュールを削除する)
 - [8. 　wlan\_connect()　指定のワイヤレスネットワークに接続する](#8-wlan_connect指定のワイヤレスネットワークに接続する)
-- [9. 　wlan\_isconnected()　ワイヤレスネットワークに接続されているかどうか](#9-wlan_isconnectedワイヤレスネットワークに接続されているかどうか)
+- [9. 　wlan\_isconnected()　ワイヤレスネットワークに接続されているかどうかを判断する](#9-wlan_isconnectedワイヤレスネットワークに接続されているかどうかを判断する)
 - [10. 　wlan\_disconnect()　ワイヤレスネットワークから切断する](#10-wlan_disconnectワイヤレスネットワークから切断する)
 - [11. 　wlan\_scan()　利用可能なワイヤレスネットワークをスキャンする](#11-wlan_scan利用可能なワイヤレスネットワークをスキャンする)
 - [12. 　wlan\_ifconfig()　IPアドレス、サブネットマスク、ゲートウェイ、DNSサーバーを取得する](#12-wlan_ifconfigipアドレスサブネットマスクゲートウェイdnsサーバーを取得する)
 - [13. 　wlan\_config()　ネットワークインターフェースパラメータを取得する](#13-wlan_configネットワークインターフェースパラメータを取得する)
 
-## 1. 　help()　関数一覧を表示
+## 1. 　help()　関数一覧を表示する
 
 - neosモジュールで使える関数の一覧を表示する
 
@@ -71,7 +71,7 @@ wlan_config(param=None) : Get network interface parameters
 >>> 
 ```
 
-## 2. 　show_memory_info()　メモリの使用状況を表示
+## 2. 　show_memory_info()　メモリの使用状況を表示する
 
 - 現在のメモリの使用状況を表示する
 
@@ -86,7 +86,7 @@ memory info:
 >>> 
 ```
 
-## 3. 　show_version()　MicroPythonのバージョン情報を表示
+## 3. 　show_version()　MicroPythonのバージョン情報を表示する
 
 - 現在動作している MicroPythonのバージョン情報を表示する
 
@@ -98,7 +98,7 @@ sys.version=3.4.0; MicroPython v1.23.0 on 2024-06-02
 >>> 
 ```
 
-## 4. 　show_implementation()　MicroPythonの実装情報を表示
+## 4. 　show_implementation()　MicroPythonの実装情報を表示する
 
 - 現在動作している MicrPythonの実装情報を表示する
 
@@ -110,7 +110,7 @@ sys.implementation=(name='micropython', version=(1, 23, 0, ''), _machine='Raspbe
 >>> 
 ```
 
-## 5. 　show_unique_id()　固有IDを表示
+## 5. 　show_unique_id()　固有IDを表示する
 
 - マシンの固有IDを表示する
 - 固有IDは byte型オブジェクトで、（）内はそれを 16進数表示したもの
@@ -123,7 +123,7 @@ machine.unique_id()=b'\xe6ad\x08C\x13?&'(0xe661640843133f26)
 >>> 
 ```
 
-## 6. 　run()　pico上のプログラムを実行
+## 6. 　run()　pico上のプログラムを実行する
 
 - pico上のプログラムを main.pyと同じように（`__name__ == '__main__'` として）実行する
 
@@ -197,7 +197,7 @@ IP address: 192.168.0.xx
 >>> 
 ```
 
-## 9. 　wlan_isconnected()　ワイヤレスネットワークに接続されているかどうか
+## 9. 　wlan_isconnected()　ワイヤレスネットワークに接続されているかどうかを判断する
 
 - 現在、ワイヤレスネットワークに接続されているかどうかを判断する
 
