@@ -20,7 +20,7 @@
 
 ## インストール <!-- omit in toc -->
 
-- Raspberry Pi Pico / Pico W のルート、または libディレクトリへ以下のファイルを配置する
+- Raspberry Pi Pico / Pico W のルート、または libディレクトリへ以下のファイルを配置する。
   - neos.py
   - wlan_info.py（wlan_connectを使用する場合に必要）
 
@@ -45,7 +45,7 @@
 
 ## 1. 　help()　関数一覧を表示する
 
-- neosモジュールで使える関数の一覧を表示する
+- neosモジュールで使える関数の一覧を表示する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -55,25 +55,25 @@ Type "help()" for more information or .help for custom vREPL commands.
 
 >>> import neos
 >>> neos.help()
-show_memory_info() : Display memory usage
-show_version() : Display MicroPython interpreter version
-show_implementation() : Display MicroPython implementation
-show_unique_id() : Display unique id of machine
-run(filename) : Execute a program on Pico
-delete_module(modulename='neos') : Remove imported module
+show_memory_info() : Display memory usage.
+show_version() : Display the MicroPython interpreter version.
+show_implementation() : Display MicroPython implementation details.
+show_unique_id() : Display the unique ID of the machine.
+run(filename) : Execute a program on the Pico.
+delete_module(modulename='neos') : Remove an imported module.
 
-wlan_connect() : Connect to a specified wireless network
-wlan_isconnected() : Check if connected to a wireless network
-wlan_disconnect() : Disconnect from a wireless network
-wlan_scan(): Scan for available wireless networks
-wlan_ifconfig() : Get IP address, subnet mask, gateway, and DNS server
-wlan_config(param=None) : Get network interface parameters
->>> 
+wlan_connect() : Connect to a specified wireless network.
+wlan_isconnected() : Check if connected to a wireless network.
+wlan_disconnect() : Disconnect from a wireless network.
+wlan_scan(): Scan for available wireless networks.
+wlan_ifconfig() : Retrieve IP address, subnet mask, gateway, and DNS server.
+wlan_config(param=None) : Retrieve network interface parameters.
+>>>
 ```
 
 ## 2. 　show_memory_info()　メモリの使用状況を表示する
 
-- 現在のメモリの使用状況を表示する
+- 現在のメモリの使用状況を表示する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -88,7 +88,7 @@ memory info:
 
 ## 3. 　show_version()　MicroPythonのバージョン情報を表示する
 
-- 現在動作している MicroPythonのバージョン情報を表示する
+- 現在動作している MicroPythonのバージョン情報を表示する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -100,7 +100,7 @@ sys.version=3.4.0; MicroPython v1.23.0 on 2024-06-02
 
 ## 4. 　show_implementation()　MicroPythonの実装情報を表示する
 
-- 現在動作している MicroPythonの実装情報を表示する
+- 現在動作している MicroPythonの実装情報を表示する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -112,8 +112,8 @@ sys.implementation=(name='micropython', version=(1, 23, 0, ''), _machine='Raspbe
 
 ## 5. 　show_unique_id()　固有IDを表示する
 
-- マシンの固有IDを表示する
-- 固有IDは byte型オブジェクトで、（）内はそれを 16進数表示したもの
+- マシンの固有IDを表示する。
+- 固有IDは byte型オブジェクトで、（）内はそれを 16進数表示したもの。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -125,7 +125,7 @@ machine.unique_id()=b'\xe6ad\x08C\x13?&'(0xe661640843133f26)
 
 ## 6. 　run()　Pico上のプログラムを実行する
 
-- Pico上のプログラムを main.pyと同じように（`__name__ == '__main__'` として）実行する
+- Pico上のプログラムを main.pyと同じように（`__name__ == '__main__'` として）実行する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -150,12 +150,12 @@ Available vREPL commands:
 
 ## 7. 　delete_module()　importしたモジュールを削除する
 
-- REPL上で、importしたモジュールを強制的に削除する
-- REPL上で importしたモジュールのソースを変更する場合、再度同じモジュールを importしても変更が反映されない。REPL環境を再起動せずに変更を反映させるには、以下の手順が必要になる
-  - 本関数を用いて importしたモジュールを強制的に削除する
-  - Pico上に変更したモジュールソースをアップロードする
-  - REPL上から再度 importする
-- 本関数の引数を省略すると、neosモジュールが削除される。他のモジュールを削除するときは引数にモジュール名の文字列を指定する
+- REPL上で、importしたモジュールを強制的に削除する。
+- REPL上で importしたモジュールのソースを変更する場合、再度同じモジュールを importしても変更が反映されない。REPL環境を再起動せずに変更を反映させるには、以下の手順が必要になる。
+  - 本関数を用いて importしたモジュールを強制的に削除する。
+  - Pico上に変更したモジュールソースをアップロードする。
+  - REPL上から再度 importする。
+- 本関数の引数を省略すると、neosモジュールが削除される。他のモジュールを削除するときは引数にモジュール名の文字列を指定する。
 
 
 ### 実行例 <!-- omit in toc -->
@@ -172,8 +172,8 @@ try to delete modulename=neos
 
 ## 8. 　wlan_connect()　指定のワイヤレスネットワークに接続する
 
-- 指定のワイヤレスネットワークに接続する
-- 接続情報（SSID とパスワード）は、wlan_info.py の中に記述する
+- 指定のワイヤレスネットワークに接続する。
+- 接続情報（SSID とパスワード）は、wlan_info.py の中に記述する。
 
 ```python
 # wlan_info.py
@@ -199,7 +199,7 @@ IP address: 192.168.0.xx
 
 ## 9. 　wlan_isconnected()　ワイヤレスネットワークに接続されているかどうかを判断する
 
-- 現在、ワイヤレスネットワークに接続されているかどうかを判断する
+- 現在、ワイヤレスネットワークに接続されているかどうかを判断する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -211,7 +211,7 @@ wlan.isconnected()=True
 
 ## 10. 　wlan_disconnect()　ワイヤレスネットワークから切断する
 
-- 接続中のワイヤレスネットワークから切断する
+- 接続中のワイヤレスネットワークから切断する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -224,7 +224,7 @@ wlan.isconnected()=False
 
 ## 11. 　wlan_scan()　利用可能なワイヤレスネットワークをスキャンする
 
-- 利用可能なワイヤレスネットワークのSSID、MACアドレス、チャンネル、RSSI、セキュリティ、hiddenの情報をタプルで表示する
+- 利用可能なワイヤレスネットワークのSSID、MACアドレス、チャンネル、RSSI、セキュリティ、hiddenの情報をタプルで表示する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -238,7 +238,7 @@ wlan.isconnected()=False
 
 ## 12. 　wlan_ifconfig()　IPアドレス、サブネットマスク、ゲートウェイ、DNSサーバーを取得する
 
-- IP アドレス、サブネットマスク、ゲートウェイ、DNS サーバーの情報をタプルで表示する
+- IP アドレス、サブネットマスク、ゲートウェイ、DNS サーバーの情報をタプルで表示する。
 
 ### 実行例 <!-- omit in toc -->
 
@@ -251,7 +251,7 @@ IP address: 192.168.0.xx
 
 ## 13. 　wlan_config()　ネットワークインターフェースパラメータを取得する
 
-- 指定されたネットワークインターフェースパラメータの値を表示する
+- 指定されたネットワークインターフェースパラメータの値を表示する。
 
 ### 実行例 <!-- omit in toc -->
 

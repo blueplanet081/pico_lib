@@ -5,19 +5,19 @@ import sys
 import machine
 
 def help():
-    print("show_memory_info() : Display memory usage")
-    print("show_version() : Display MicroPython interpreter version")
-    print("show_implementation() : Display MicroPython implementation")
-    print("show_unique_id() : Display unique id of machine")
-    print("run(filename) : Execute a program on Pico")
-    print("delete_module(modulename='neos') : Remove imported module")
+    print("show_memory_info() : Display memory usage.")
+    print("show_version() : Display the MicroPython interpreter version.")
+    print("show_implementation() : Display MicroPython implementation details.")
+    print("show_unique_id() : Display the unique ID of the machine.")
+    print("run(filename) : Execute a program on the Pico.")
+    print("delete_module(modulename='neos') : Remove an imported module.")
     print()
-    print("wlan_connect() : Connect to a specified wireless network")
-    print("wlan_isconnected() : Check if connected to a wireless network")
-    print("wlan_disconnect() : Disconnect from a wireless network")
-    print("wlan_scan(): Scan for available wireless networks")
-    print("wlan_ifconfig() : Get IP address, subnet mask, gateway, and DNS server")
-    print("wlan_config(param=None) : Get network interface parameters")
+    print("wlan_connect() : Connect to a specified wireless network.")
+    print("wlan_isconnected() : Check if connected to a wireless network.")
+    print("wlan_disconnect() : Disconnect from a wireless network.")
+    print("wlan_scan(): Scan for available wireless networks.")
+    print("wlan_ifconfig() : Retrieve IP address, subnet mask, gateway, and DNS server.")
+    print("wlan_config(param=None) : Retrieve network interface parameters.")
 
 def show_memory_info():
     ''' メモリの使用状況を表示 '''
