@@ -2,12 +2,20 @@ import gc
 import time
 import network
 import sys
+import os
 import machine
+
+def parse_kv_string_to_dict(data):
+    keys = str(data)[1:-1].split("=")[0:-1]
+    keys = [key[key.rfind(' ') + 1:] for key in keys]
+
+    return {keys[i]: data[i] for i in range(len(keys))}
 
 def help():
     print("show_memory_info() : Display memory usage.")
     print("show_version() : Display the MicroPython interpreter version.")
     print("show_implementation() : Display MicroPython implementation details.")
+    print("show_uname() : Display basic system and device information.")
     print("show_unique_id() : Display the unique ID of the machine.")
     print("run(filename) : Execute a program on the Pico.")
     print("delete_module(modulename='neos') : Remove an imported module.")
@@ -37,6 +45,24 @@ def show_version():
 def show_implementation():
     ''' MicroPythonの実装情報を表示 '''
     print(f"{sys.implementation=}")
+    print()
+
+    info_dict = parse_kv_string_to_dict(sys.implementation)
+    for key, value in info_dict.items():
+        if type(value) is str:
+            print(f"{key}: '{value}'")
+        else:
+            print(f"{key}: {value}")
+
+def show_uname():
+    ''' システムやデバイスの基本情報を表示 '''
+    uname = os.uname()
+    print(f"{uname=}")
+    print()
+    # dict_uname = parse_kv_string_to_dict_old(str(uname))
+    dict_uname = parse_kv_string_to_dict(uname)
+    for key, value in dict_uname.items():
+        print(f"{key}: '{value}'")
 
 def show_unique_id():
     ''' 固有IDを表示 '''
