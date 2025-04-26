@@ -13,25 +13,24 @@
 
 - pinout_label_type*.cld: ピンアウトラベルデータ（らくちんCDラベルメーカー形式）
 - pinout_label_type*.pdf: ピンアウトラベル PDFデータ
-- *.jpg: 説明画像
   
 
 
 ## ラベルイメージ
 ### typeA（電源とGPIO番号）
-![typeA](pinout_label_typeA.jpg)
+![typeA](image/pinout_label_typeA.jpg)
 ### typeB（その他信号）
-![typeB](pinout_label_typeB.jpg)
+![typeB](image/pinout_label_typeB.jpg)
 ### typeC（A + B）
-![typeC](pinout_label_typeC.jpg)
+![typeC](image/pinout_label_typeC.jpg)
 
 <br>
 
 ## 使用例
 ### ブレッドボードに貼った例
-![ブレッドボードに貼った例](image02.jpg)
+![ブレッドボードに貼った例](image/image02.jpg)
 ### I2C配線のために該当ラベルを追加した例
-![alt text](20250418_131301249_iOS.jpg)
-![alt text](20250418_131404343_iOS.jpg)
+![alt text](image/20250418_131301249_iOS.jpg)
+![alt text](image/20250418_131404343_iOS.jpg)
 ### ユニバーサル基板の裏に貼った例
-![alt text](20250419_080943405_iOS.jpg)
+![alt text](image/20250419_080943405_iOS.jpg)
