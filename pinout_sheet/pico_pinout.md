@@ -14,7 +14,7 @@
 - pinout_label_type*.cld: ピンアウトラベルデータ（らくちんCDラベルメーカー形式）
 - pinout_label_type*.pdf: ピンアウトラベル PDFデータ
   
-
+<br>
 
 ## ラベルイメージ
 ### typeA（電源とGPIO番号）
