@@ -6,7 +6,7 @@
 
 | ファイル名                                       | 内容               | ver. | 日付       | メモ |
 | ------------------------------------------------ | ------------------ | ---- | ---------- | ---- |
-| readme.md                                        | 本書               |      | 2025/04/28 | 追加 |
+| readme.md                                        | 本書               |      | 2025/04/29 | PDFデータへのリンクを追加した |
 | [pico_pinout.md](pico_pinout.md)                 | 説明書             | 1.0  | 2025/04/26 |      |
 | pinout_label_typeA.cld                           | typeA ラベルデータ | 1.0  | 2025/04/18 |      |
 | [pinout_label_typeA.pdf](pinout_label_typeA.pdf) | typeA PDFデータ    | 1.0  | 2025/04/18 |      |
