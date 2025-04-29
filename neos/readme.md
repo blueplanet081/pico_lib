@@ -1,7 +1,6 @@
 ![alt text](image/image06.jpg)
 # neos モジュール
-接続した Raspberry Pi Pico / Pico W の状態を vREPLから確認できる関数を提供するモジュールです。
-
+vREPL ターミナルから、接続された Raspberry Pi Pico / Pico W の状態を確認できる関数を提供するモジュールです。
 <br>
 
 ## 使用例
