@@ -5,11 +5,15 @@ import sys
 import os
 import machine
 
-def parse_kv_string_to_dict(data):
-    keys = str(data)[1:-1].split("=")[0:-1]
-    keys = [key[key.rfind(' ') + 1:] for key in keys]
+def getkeys_from_kv_tuple(data):
+    ''' key=value形式の特殊なtupleから、keyのリストを取得する '''
+    w_keys = str(data)[1:-1].split("=")[0:-1]
+    return [key[key.rfind(' ') + 1:] for key in w_keys]
 
-    return {keys[i]: data[i] for i in range(len(keys))}
+def makedict_from_kv_tuple(data):
+    ''' key=value形式の特殊なtupleを辞書形式に変換する '''
+    keys = getkeys_from_kv_tuple(data)
+    return {key: value for key, value in zip(keys, data)}
 
 def help():
     print("show_memory_info() : Display memory usage.")
@@ -47,8 +51,9 @@ def show_implementation():
     print(f"{sys.implementation=}")
     print()
 
-    info_dict = parse_kv_string_to_dict(sys.implementation)
-    for key, value in info_dict.items():
+    dict_info = makedict_from_kv_tuple(sys.implementation)
+    for key in getkeys_from_kv_tuple(sys.implementation):
+        value = dict_info[key]
         if type(value) is str:
             print(f"{key}: '{value}'")
         else:
@@ -57,12 +62,12 @@ def show_implementation():
 def show_uname():
     ''' システムやデバイスの基本情報を表示 '''
     uname = os.uname()
-    print(f"{uname=}")
+    print(f"os.uname()={uname}")
     print()
-    # dict_uname = parse_kv_string_to_dict_old(str(uname))
-    dict_uname = parse_kv_string_to_dict(uname)
-    for key, value in dict_uname.items():
-        print(f"{key}: '{value}'")
+
+    dict_uname = makedict_from_kv_tuple(uname)
+    for key in getkeys_from_kv_tuple(uname):
+        print(f"{key}: '{dict_uname[key]}'")
 
 def show_unique_id():
     ''' 固有IDを表示 '''
