@@ -66,13 +66,13 @@ Raspberry Pi Pico 上でシングルスレッドのマルチタスクを実現�
   - [1.14. 　付録](#114-付録)
     - [1.14.1. 　付録１　トレース情報出力レベル](#1141-付録１トレース情報出力レベル)
     - [1.14.2. 　付録２　タスクの状態](#1142-付録２タスクの状態)
-- [2. 　CheckTime()　経過時間(ミリ秒)をチェックするクラス](#2-checktime経過時間ミリ秒をチェックするクラス)
+- [2. 　CheckTime()　経過時間をチェックするクラス](#2-checktime経過時間をチェックするクラス)
   - [2.1. 　CheckTime()　コンストラクタ](#21-checktimeコンストラクタ)
-  - [2.2. 　set　基準時刻を trun時刻、または指定時刻に変更する](#22-set基準時刻を-trun時刻または指定時刻に変更する)
-  - [2.3. 　add\_ms(delta)　基準時刻を delta(msec) だけ加算する](#23-add_msdelta基準時刻を-deltamsec-だけ加算する)
+  - [2.2. 　set()　基準時刻を trun時刻、または指定時刻に変更する](#22-set基準時刻を-trun時刻または指定時刻に変更する)
+  - [2.3. 　add\_ms()　基準時刻を加算する](#23-add_ms基準時刻を加算する)
   - [2.4. 　ref\_time()　基準時刻を返す](#24-ref_time基準時刻を返す)
   - [2.5. 　y\_wait()　wait\_ms(msec) 時間が経過するまで yieldを繰り返す](#25-y_waitwait_msmsec-時間が経過するまで-yieldを繰り返す)
-  - [2.6. 　wait(wait\_ms)　wait\_ms(msec) 時間が経過するまでTrue、経過したらFalseになる](#26-waitwait_mswait_msmsec-時間が経過するまでtrue経過したらfalseになる)
+  - [2.6. 　wait(wait\_ms)　wait\_ms(msec) 指定時間経過判定（非推奨）](#26-waitwait_mswait_msmsec-指定時間経過判定非推奨)
 
 <br>
 <br>
@@ -295,38 +295,42 @@ name に終了するタスクの名前を指定します。省略時はすべて
 
 ---
 
-## 2. 　CheckTime()　経過時間(ミリ秒)をチェックするクラス
+## 2. 　CheckTime()　経過時間をチェックするクラス
 
-経過時間（ミリ秒）をチェックするためのクラスです。
+基準時刻からの経過時間（ミリ秒）を管理するためのクラスです。
 
 ### 2.1. 　CheckTime()　コンストラクタ
 
-- CheckTimeオブジェクトを生成し、基準時刻を現在の turn時刻(msec)に設定する
-- 注）turn時刻は Edasのタイマーループの各turnの開始時刻で、 Edas.ticks_ms() で得られる時刻
+CheckTime オブジェクトを生成し、基準時刻を現在の turn 時刻（ミリ秒）に設定します。
 
-### 書式 <!-- omit in toc -->
+- 注： turn 時刻は Edas のタイマーループにおける各ターンの開始時刻であり、Edas.ticks_ms() で取得できます。
+
+### 書式： <!-- omit in toc -->
 
     <ctime> = CheckTime()
 
 <br>
 
-### 2.2. 　set　基準時刻を trun時刻、または指定時刻に変更する
+### 2.2. 　set()　基準時刻を trun時刻、または指定時刻に変更する
 
-- ms はmsec単位の指定時刻。省略時は turn時刻になる
-- 現在の基準時刻(msec)を返す
+基準時刻を turn 時刻、または指定した時刻（ミリ秒）に変更します。
 
-#### 書式 <!-- omit in toc -->
+- ms 引数にミリ秒単位の時刻を指定します。省略した場合、基準時刻は現在の turn 時刻に設定されます。
+- 変更後の基準時刻（ミリ秒）を返します。
+
+#### 書式： <!-- omit in toc -->
 
     <time_ms> = <ctime>.set(ms=None)
 
  <br>
 
-### 2.3. 　add_ms(delta)　基準時刻を delta(msec) だけ加算する
+### 2.3. 　add_ms()　基準時刻を加算する
 
-- 基準時刻を delta(msec) だけ加算する
-- 変更された現在の基準時刻(msec)を返す
+基準時刻に delta（ミリ秒）を加算します。
 
-#### 書式 <!-- omit in toc -->
+- 変更後の基準時刻（ミリ秒）を返します。
+
+#### 書式： <!-- omit in toc -->
 
     <time_ms> = <ctime>.add_ms(delta)
 
@@ -334,9 +338,9 @@ name に終了するタスクの名前を指定します。省略時はすべて
 
 ### 2.4. 　ref_time()　基準時刻を返す
 
-- 現在の基準時刻(msec)を返す
+現在の基準時刻(msec)を返します。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
     <time_ms> = <ctime>.ref_time()
 
@@ -344,15 +348,15 @@ name に終了するタスクの名前を指定します。省略時はすべて
 
 ### 2.5. 　y_wait()　wait_ms(msec) 時間が経過するまで yieldを繰り返す
 
-- タスクジェネレータの中で、時間を調整するときに使用する
-- update=Trueを指定すると、時間経過後に基準時刻を wait_ms分更新（加算）する<br>
-省略時は、update=False（基準時刻を更新しない）
+タスクジェネレータ内で、指定した時間 (wait_ms: ミリ秒) が経過するまで yield を繰り返します。
 
-#### 書式（使用方法） <!-- omit in toc -->
+update=Trueを指定すると、時間経過後に基準時刻を wait_ms分だけ更新（加算）します。update=Falseの場合は、基準時刻を更新しません。
+
+#### 書式： <!-- omit in toc -->
 
     yield from <ctime>.y_wait(wait_ms, update=False)
 
-#### 使用例 <!-- omit in toc -->
+#### 使用例： <!-- omit in toc -->
 
 ```python
 import time
@@ -360,14 +364,14 @@ from machine import Pin
 from mymachine import Edas, CheckTime
 
 def lblink(pin, on_time, off_time, n):
-    _ctime = CheckTime()
-    _count = 0
-    while not n or _count < n:
+    ctime = CheckTime()
+    count = 0
+    while not n or count < n:
         pin.value(1)
-        yield from _ctime.y_wait(on_time, update=True)
+        yield from ctime.y_wait(on_time, update=True)
         pin.value(0)
-        yield from _ctime.y_wait(off_time, update=True)
-        _count += 1
+        yield from ctime.y_wait(off_time, update=True)
+        count += 1
 
 led = Pin("LED", Pin.OUT)
 Edas.start_loop()
@@ -380,13 +384,14 @@ for i in range(10):
 
 <br>
 
-### 2.6. 　wait(wait_ms)　wait_ms(msec) 時間が経過するまでTrue、経過したらFalseになる
+### 2.6. 　wait(wait_ms)　wait_ms(msec) 指定時間経過判定（非推奨）
 
-- obsolete
+指定した時間 (wait_ms: ミリ秒) が経過するまで True を返し、経過したら False を返します。
 
-#### 書式 <!-- omit in toc -->
+非推奨（obsolete）
+
+#### 書式： <!-- omit in toc -->
 
     <True/False> = <ctime>.wait(wait_ms)
 
 <br>
-
