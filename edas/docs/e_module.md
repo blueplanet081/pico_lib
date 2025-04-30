@@ -1,4 +1,4 @@
-# e_module モジュール　 <!-- omit in toc -->
+# e_module モジュール説明書　 <!-- omit in toc -->
 
 Raspberry Pi Pico 上でシングルスレッドのマルチタスクを実現するための基本モジュールです。
 
