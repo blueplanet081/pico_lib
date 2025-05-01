@@ -117,7 +117,7 @@ for i in range(1000):
   - [5.7. 　flicker()　バックグラウンドで LEDを点滅させる（blinkと引数の指定方法が違うだけ）](#57-flickerバックグラウンドで-ledを点滅させるblinkと引数の指定方法が違うだけ)
   - [5.8. 　y\_blink()　LEDを点滅させるタスクジェネレータ](#58-y_blinkledを点滅させるタスクジェネレータ)
   - [5.9. 　stop\_background()　バックグラウンド処理を停止する](#59-stop_backgroundバックグラウンド処理を停止する)
-  - [5.10. 　stop\_background\_and\_execute()　バックグラウンド処理を停止した後、指定処理を実行する](#510-stop_background_and_executeバックグラウンド処理を停止した後指定処理を実行する)
+  - [5.10. 　stop\_background\_and\_execute()　バックグラウンド処理停止後に指定処理を実行する](#510-stop_background_and_executeバックグラウンド処理停止後に指定処理を実行する)
 - [6. 　class PWMLED()　LEDを PWMを用いて制御するクラス](#6-class-pwmledledを-pwmを用いて制御するクラス)
   - [6.1. 　PWMLED()　PWMLEDを設定する（コンストラクタ）](#61-pwmledpwmledを設定するコンストラクタ)
   - [6.2. 　on()　PWMLEDを点灯する（duty比を最高値にする）](#62-onpwmledを点灯するduty比を最高値にする)
@@ -653,10 +653,10 @@ LEDの現在の点灯状態を反転させます。
 
 #### 引数一覧 <!-- omit in toc -->
 
-| 名前          | 型              | 内容                                                                     |
-| ------------- | --------------- | ------------------------------------------------------------------------ |
-| on_time       | float           | LED の点灯時間（秒）を指定します。                                          |
-| off_time      | float           | LED の消灯時間（秒）を指定します。                                          |
+| 名前          | 型              | 内容                                  |
+| ------------- | --------------- | ------------------------------------ |
+| on_time       | float           | LED の点灯時間（秒）を指定します。      |
+| off_time      | float           | LED の消灯時間（秒）を指定します。      |
 | n             | int, None       | 点滅回数を指定します。0 または None を指定すると、永久に繰り返します。         |
 | previous_task | `<etask>`, None | 指定された場合、先行するタスク（`<etask>`）の終了後にこの点滅処理を実行します。 |
 
@@ -684,45 +684,41 @@ LEDの現在の点灯状態を反転させます。
 
 ### 5.8. 　y_blink()　LEDを点滅させるタスクジェネレータ
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<etask> = Edas(<led>.y_blink, on_time, off_time, n)
-```
+    <etask> = Edas(<led>.y_blink, on_time, off_time, n)
 
-#### 引数一覧 <!-- omit in toc -->
+#### 引数： <!-- omit in toc -->
 
 | 名前     | 型         | 内容                                          |
 | -------- | ---------- | --------------------------------------------- |
-| on_time  | int, float | 点灯時間（秒）                                |
-| off_time | int, float | 消灯時間（秒）                                |
-| n        | int, None  | 点滅回数。0 または Noneのときは永久に繰り返す |
+| on_time  | int, float | LED の点灯時間（秒）を指定します。     |
+| off_time | int, float | LED の消灯時間（秒）を指定します。           |
+| n        | int, None  | 点滅回数を指定します。0 または None を指定すると、永久に繰り返します。 |
 
 <br>
 
 ### 5.9. 　stop_background()　バックグラウンド処理を停止する
 
-- blinkなどのバックグラウンド処理を停止する
-- sync=True を指定すると、バックグラウンド処理を syncポイントまで実行した後停止する。False の場合は即停止する<br>（指定を省略すると True）
+blinkなどのバックグラウンド処理を停止します。
 
-#### 書式 <!-- omit in toc -->
+- sync=True を指定すると、バックグラウンド処理を同期ポイントまで実行した後停止します。False の場合は即座に停止します（省略時のデフォルトは True です）。
 
-```python
-<pwmled>.stop_background(sync=True)
-```
+#### 書式： <!-- omit in toc -->
+
+    <led>.stop_background(sync=True)
 
 <br>
 
-### 5.10. 　stop_background_and_execute()　バックグラウンド処理を停止した後、指定処理を実行する
+### 5.10. 　stop_background_and_execute()　バックグラウンド処理停止後に指定処理を実行する
 
-- blinkなどのバックグラウンド処理を停止した後 func を実行する
-- sync=True を指定すると、バックグラウンド処理を syncポイントまで実行した後停止する。False の場合は即停止する<br>（指定を省略すると False）
+blink などのバックグラウンド処理を停止した後、指定された関数 func を実行します。
 
-#### 書式 <!-- omit in toc -->
+- sync=True を指定すると、バックグラウンド処理を同期ポイントまで実行した後停止します。False の場合は即座に停止します（省略時のデフォルトは False です）。
 
-```python
-<pwmled>._after_background(func, sync=False)
-```
+#### 書式： <!-- omit in toc -->
+
+    <led>._after_background(func, sync=False)
 
 <br>
 <br>
@@ -731,27 +727,25 @@ LEDの現在の点灯状態を反転させます。
 
 ## 6. 　class PWMLED()　LEDを PWMを用いて制御するクラス
 
-- LEDを PWMを用いて制御するクラス（PWMのサブクラス）
+PWM (Pulse Width Modulation) を用いて LED を制御するためのクラスです (`PWM` クラスのサブクラスです)。
 
 ### 6.1. 　PWMLED()　PWMLEDを設定する（コンストラクタ）
 
-- LEDを接続したGPIO番号、Pin、またはLEDオブジェクトに対して「PWMLED」オブジェクトを作成するコンストラクタ
+LED が接続された GPIO 番号、Pin オブジェクト、または `LED` オブジェクトに対して `PWMLED` オブジェクトを作成するコンストラクタです。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<pwmled> = PWMLED(pin, freq=100, value=0.0, lo=0.0, hi=1.0, invert=False, curve=1.0)
-```
+    <pwmled> = PWMLED(pin, freq=100, value=0.0, lo=0.0, hi=1.0, invert=False, curve=1.0)
 
-#### 引数一覧 <!-- omit in toc -->
+#### 引数： <!-- omit in toc -->
 
-| 名前   | 型            | 内容                                                                                                                                            |
-| ------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| pin    | int, LED, pin | 対象のpinを、pin番号(int)、 LED、 Pin などで指定する                                                                                            |
-| freq   | int           | PWM出力の周波数(Hz)を指定する。省略時は 100Hzになる                                                                                             |
-| value  | float         | PWM出力のduty比率の初期時を 0.0～1.0の値で指定する。省略時は 0.0になる                                                                          |
-| lo     | float         | PWM出力のduty比率の最低値を設定する。省略時は 0.0になる                                                                                         |
-| hi     | float         | PWM出力のduty比率の最高値を設定する。省略時は 1.0になる                                                                                         |
+| 名前   | 型            | 内容                                                   |
+| ------ | ------------- | ----------------------------------------------------- |
+| pin    | int, LED, pin | 対象のpinを、pin番号(int)、 LED、 Pin などで指定します。します。     |
+| freq   | int           | PWM出力の周波数(Hz)を指定します。省略時は 100Hzになります。                  |
+| value  | float         | PWM出力のduty比率の初期時を 0.0～1.0の値で指定します。省略時は 0.0になります。  |
+| lo     | float         | PWM出力のduty比率の最低値を設定する。省略時は 0.0になる                 |
+| hi     | float         | PWM出力のduty比率の最高値を設定する。省略時は 1.0になる                 |
 | invert | bool          | pinが highの時に LEDが点灯する場合（正論理）、invert=False (default)を、<br>pinが lowの時に LEDが点灯する場合（負論理）、invert=Trueを指定する  |
 | curve  | float         | duty比率の指定値と物理値の対数カーブを指定する。1.0より大きい値を指定すると、duty比率に対する LEDの明るさが「緩やか」になる。省略値は 1.0になる |
 
