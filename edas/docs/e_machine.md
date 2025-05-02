@@ -123,18 +123,18 @@ for i in range(1000):
   - [6.2. 　on()　PWMLEDを点灯する（duty比を最高値にする）](#62-onpwmledを点灯するduty比を最高値にする)
   - [6.3. 　off()　PWMLEDを消灯する（duty比を最低値にする）](#63-offpwmledを消灯するduty比を最低値にする)
   - [6.4. 　toggle()　現在の duty比を逆転する](#64-toggle現在の-duty比を逆転する)
-  - [6.5. 　duty()　PWMの duty比率を設定／取得する](#65-dutypwmの-duty比率を設定取得する)
-  - [6.6. 　value()　PWMの duty比率を設定／取得する（duty() と同じ）](#66-valuepwmの-duty比率を設定取得するduty-と同じ)
+  - [6.5. 　duty()　PWMの duty比を設定／取得する](#65-dutypwmの-duty比を設定取得する)
+  - [6.6. 　value()　PWMの duty比を設定／取得する（duty() と同じ）](#66-valuepwmの-duty比を設定取得するduty-と同じ)
   - [6.7. 　fadein()　PWMの duty比を、現在値から最高値まで連続して変化させる](#67-fadeinpwmの-duty比を現在値から最高値まで連続して変化させる)
   - [6.8. 　fadeout()　PWMの duty比を現在値から最低値まで連続して変化させる](#68-fadeoutpwmの-duty比を現在値から最低値まで連続して変化させる)
-  - [6.9. 　\_fade()　PWMの duty比を指定の開始 duty比から指定の終了 duty比まで連続して変化させる](#69-_fadepwmの-duty比を指定の開始-duty比から指定の終了-duty比まで連続して変化させる)
+  - [6.9. 　\_fade()　PWMの duty比を指定の値の間で連続して変化させる](#69-_fadepwmの-duty比を指定の値の間で連続して変化させる)
   - [6.10. 　y\_fade()　fadein、fadeout するためのタスクジェネレータ](#610-y_fadefadeinfadeout-するためのタスクジェネレータ)
   - [6.11. 　blink()　PWMLEDを点滅させる](#611-blinkpwmledを点滅させる)
   - [6.12. 　y\_blink()　PWMLED を点滅させるタスクジェネレータ](#612-y_blinkpwmled-を点滅させるタスクジェネレータ)
   - [6.13. 　pulse()　PWMLEDを連続して点滅させる](#613-pulsepwmledを連続して点滅させる)
   - [6.14. 　y\_pulse()　PWMLEDを連続して点滅させるタスクジェネレータ](#614-y_pulsepwmledを連続して点滅させるタスクジェネレータ)
   - [6.15. 　stop\_background()　バックグラウンド処理を停止する](#615-stop_backgroundバックグラウンド処理を停止する)
-  - [6.16. 　stop\_background\_and\_execute()　バックグラウンド処理を停止した後、指定処理を実行する](#616-stop_background_and_executeバックグラウンド処理を停止した後指定処理を実行する)
+  - [6.16. 　stop\_background\_and\_execute()　バックグラウンド処理停止後に指定処理を実行する](#616-stop_background_and_executeバックグラウンド処理停止後に指定処理を実行する)
 
 <br>
 <br>
@@ -591,11 +591,11 @@ LED が接続されたGPIO番号、または内蔵LEDに対して LED オブジ�
 
 #### 引数： <!-- omit in toc -->
 
-| 名前   | 型       | 内容                                                                                     |
-| ------ | -------- | ---------------------------------------------------------------------------------------- |
-| pno    | int, str | LEDが接続された GPIO番号、または "led" を指定します。                                    |
+| 名前   | 型       | 内容                                                                |
+| ------ | -------- | ------------------------------------------------------------------ |
+| pno    | int, str | LEDが接続された GPIO番号、または "led" を指定します。                  |
 | value  | int      | LEDの初期値を指定します。（消灯のときは 0（デフォルト）、点灯のときは 1 を指定します。） |
-| invert | bool     | 正論理の場合は False（デフォルト）、負論理の場合は Trueを指定します。                    |
+| invert | bool     | LEDの接続が正論理の場合は False（デフォルト）、負論理の場合は Trueを指定します。|
 
 - pinが highの時に LEDが点灯する状態を「正論理」、lowの時に LEDが点灯する状態を「負論理」と言います。
 
@@ -686,7 +686,7 @@ LEDの現在の点灯状態を反転させます。
 
 #### 書式： <!-- omit in toc -->
 
-    <etask> = Edas(<led>.y_blink, on_time, off_time, n)
+    <generator> = <led>.y_blink(on_time, off_time, n)
 
 #### 引数： <!-- omit in toc -->
 
@@ -741,13 +741,15 @@ LED が接続された GPIO 番号、Pin オブジェクト、または `LED` �
 
 | 名前   | 型            | 内容                                                   |
 | ------ | ------------- | ----------------------------------------------------- |
-| pin    | int, LED, pin | 対象のpinを、pin番号(int)、 LED、 Pin などで指定します。します。     |
+| pin    | int, LED, pin | 対象のpinを、pin番号(int)、 LED、 Pin などで指定します。     |
 | freq   | int           | PWM出力の周波数(Hz)を指定します。省略時は 100Hzになります。                  |
 | value  | float         | PWM出力のduty比率の初期時を 0.0～1.0の値で指定します。省略時は 0.0になります。  |
-| lo     | float         | PWM出力のduty比率の最低値を設定する。省略時は 0.0になる                 |
-| hi     | float         | PWM出力のduty比率の最高値を設定する。省略時は 1.0になる                 |
-| invert | bool          | pinが highの時に LEDが点灯する場合（正論理）、invert=False (default)を、<br>pinが lowの時に LEDが点灯する場合（負論理）、invert=Trueを指定する  |
-| curve  | float         | duty比率の指定値と物理値の対数カーブを指定する。1.0より大きい値を指定すると、duty比率に対する LEDの明るさが「緩やか」になる。省略値は 1.0になる |
+| lo     | float         | PWM出力のduty比率の最低値を指定します。省略時は 0.0になります。               |
+| hi     | float         | PWM出力のduty比率の最高値を指定します。省略時は 1.0になります。                 |
+| invert | bool          | LEDの接続が正論理の場合は False（デフォルト）、負論理の場合は Trueを指定します。  |
+| curve  | float         | duty比率の指定値と物理値の対数カーブを指定します。1.0より大きい値を指定すると、duty比率に対する LEDの明るさ変化が「緩やか」になります。省略値は 1.0になります。|
+
+- pinが highの時に LEDが点灯する状態を「正論理」、lowの時に LEDが点灯する状態を「負論理」と言います。
 
 - 対数カーブに指定する値
   - curve ＜ 1.0： 「Cカーブ」相当
@@ -759,202 +761,176 @@ LED が接続された GPIO 番号、Pin オブジェクト、または `LED` �
 
 ### 6.2. 　on()　PWMLEDを点灯する（duty比を最高値にする）
 
-- PWMLEDを点灯する（duty比を最高値にする）
-- バックグラウンド処理があれば先に停止する
+PWMLEDを点灯します（duty比を最高値にします）。<br>
+バックグラウンド処理が実行中の場合は、それらを先に停止します。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<pwmled>.on()
-```
+    <pwmled>.on()
+
+<br>
 
 ### 6.3. 　off()　PWMLEDを消灯する（duty比を最低値にする）
 
-- PWMLEDを消灯する（duty比を最低値にする）
-- バックグラウンド処理があれば先に停止する
+PWMLEDを消灯します（duty比を最低値にします）。<br>
+バックグラウンド処理が実行中の場合は、それらを先に停止します。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<pwmled>.off()
-```
+    <pwmled>.off()
 
 <br>
 
 ### 6.4. 　toggle()　現在の duty比を逆転する
 
-#### 書式 <!-- omit in toc -->
+PWMLEDの現在の duty比を逆転させます。
 
-```python
-<pwmled>.toggle()
-```
+#### 書式： <!-- omit in toc -->
 
-<br>
-
-### 6.5. 　duty()　PWMの duty比率を設定／取得する
-
-- PWMの duty比率（value）を 0.0～1.0 の範囲で設定する。引数省略時は現在の duty比率を返す
-
-#### 書式 <!-- omit in toc -->
-
-```python
-<float> = <pwmled>.duty(value=None)
-```
+    <pwmled>.toggle()
 
 <br>
 
-### 6.6. 　value()　PWMの duty比率を設定／取得する（duty() と同じ）
+### 6.5. 　duty()　PWMの duty比を設定／取得する
 
-- PWMの duty比率（value）を 0.0～1.0 の範囲で設定する。引数省略時は現在の duty比率を返す
-- 機能は duty() と同一
+PWMの duty比（value）を 0.0～1.0 の範囲で設定します。引数を省略した場合は、現在の duty比を返します。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<float> = <pwmled>.value(value=None)
-```
+
+    <float> = <pwmled>.duty(value=None)
+
+<br>
+
+### 6.6. 　value()　PWMの duty比を設定／取得する（duty() と同じ）
+
+PWMの duty比（value）を 0.0～1.0 の範囲で設定します。引数を省略した場合は、現在の duty比を返します。
+（機能は duty() と同じです。）
+
+#### 書式： <!-- omit in toc -->
+
+    <float> = <pwmled>.value(value=None)
 
 <br>
 
 ### 6.7. 　fadein()　PWMの duty比を、現在値から最高値まで連続して変化させる
 
-- PWMの duty比を、現在値から最高値まで fade_time秒かけて変化させる
-- 他のバックグラウンド処理があれば先に停止する
+PWMの duty比を、現在値から最高値まで fade_time 秒かけて変化させます。<br>
+バックグラウンド処理が実行中の場合は、それらを先に停止します。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<etask> = <pwmled>.fadein(fade_time=1.0)
-```
+    <etask> = <pwmled>.fadein(fade_time=1.0)
 
 <br>
 
 ### 6.8. 　fadeout()　PWMの duty比を現在値から最低値まで連続して変化させる
 
-- PWMの duty比を、現在値から最低値まで fade_time秒かけて変化させる
-- 他のバックグラウンド処理があれば先に停止する
+PWM の duty 比を、現在値から最低値まで fade_time 秒かけて連続的に変化させます。<br>
+バックグラウンド処理が実行中の場合は、それらを先に停止します。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<etask> = <pwmled>.fadeout(fade_time=1.0)
-```
+    <etask> = <pwmled>.fadeout(fade_time=1.0)
 
 <br>
 
-### 6.9. 　_fade()　PWMの duty比を指定の開始 duty比から指定の終了 duty比まで連続して変化させる
+### 6.9. 　_fade()　PWMの duty比を指定の値の間で連続して変化させる
 
-- PWMの duty比を指定の開始 duty比から指定の終了 duty比まで fade_time秒かけて変化させる
-- fadein()、fadeout() が呼び出している内部関数
+PWM の duty 比を、指定された開始 duty 比 (duty_from) から終了 duty 比 (duty_to) まで fade_time 秒かけて連続的に変化させます。
 
-#### 書式 <!-- omit in toc -->
+- fadein()、fadeout() から呼び出される内部関数です。
 
-```python
-<etask> = <pwmled>._fade(fade_time, duty_from=0.0, duty_to=1.0)
-```
+#### 書式： <!-- omit in toc -->
+
+    <etask> = <pwmled>._fade(fade_time, duty_from=0.0, duty_to=1.0)
 
 <br>
 
 ### 6.10. 　y_fade()　fadein、fadeout するためのタスクジェネレータ
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<generator> = <pwmled>.y_fade(fade_time, duty_from, duty_to)
-```
+    <generator> = <pwmled>.y_fade(fade_time, duty_from, duty_to)
 
 <br>
 
 ### 6.11. 　blink()　PWMLEDを点滅させる
 
-- PWMLEDを、duty比率最低値～最高値の間で点滅させる
-- 指定により、点灯時、点灯終了時に fadein/fadeoutを行う
-- 他のバックグラウンド処理があれば先に停止する
-- 
+PWMLED を、duty比の最低値から最高値の間で点滅させます。必要に応じて、点灯開始時と点灯終了時に fade-in/fade-out を実行します。<br>
+他のバックグラウンド処理が実行中の場合は、それらを先に停止します。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<etask> = <pwmled>.blink(on_time=1.0, off_time=1.0, fade_in_time=0.0, fade_out_time=0.0, n=None)
-```
+    <etask> = <pwmled>.blink(on_time=1.0, off_time=1.0, fade_in_time=0.0, fade_out_time=0.0, n=None)
 
-#### 引数一覧 <!-- omit in toc -->
+#### 引数： <!-- omit in toc -->
 
-| 名前          | 型        | 内容                                                                           |
-| ------------- | --------- | ------------------------------------------------------------------------------ |
-| on_time       | float     | 点灯時間（秒）、省略時は 1.0秒                                                 |
-| off_time      | float     | 消灯時間（秒）、省略時は 1.0秒                                                 |
-| fade_in_time  | float     | 点灯時間中、duty比率を最低値から最高値まで変化させる時間（秒）、省略時は 0.0秒 |
-| fade_out_time | float     | 点灯時間中、duty比率を最高値から最低値まで変化させる時間（秒）、省略時は 0.0秒 |
-| n             | int, None | 点滅回数。0 または Noneのときは永久に繰り返す                                  |
+| 名前          | 型        | 内容                                           |
+| ------------- | --------- | --------------------------------------------- |
+| on_time       | float     | 点灯時間（秒）を指定します。省略時のデフォルトは 1.0 秒です。       |
+| off_time      | float     | 消灯時間（秒）を指定します。省略時のデフォルトは 1.0 秒です。        |
+| fade_in_time  | float     | 点灯開始時に、duty比を最低値から最高値まで変化させる時間（秒）を指定します。省略時のデフォルトは 0.0 秒です。 |
+| fade_out_time | float     | 点灯終了時に、duty比を最高値から最低値まで変化させる時間（秒）を指定します。省略時のデフォルトは 0.0 秒です。 |
+| n             | int | 点滅回数を指定します。0 または None を指定すると、永久に繰り返します。 |
 
 <br>
 
 ### 6.12. 　y_blink()　PWMLED を点滅させるタスクジェネレータ
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<generator> = <pwmled>.y_blink(on_time, off_time, fade_in_time, fade_out_time, n)
-```
+    <generator> = <pwmled>.y_blink(on_time, off_time, fade_in_time, fade_out_time, n)
 
 <br>
 
 ### 6.13. 　pulse()　PWMLEDを連続して点滅させる
 
-- PWMLEDを、duty比率最低値～最高値の間で連続して点滅させる
-- 点滅時に fadein/fadeoutを行う
-- 他のバックグラウンド処理があれば先に停止する
+PWMLED を、duty比の最低値から最高値の間で連続して点滅させます。必要に応じて、点灯開始時と点灯終了時に fade-in/fade-out を実行します。<br>
+他のバックグラウンド処理が実行中の場合は、それらを先に停止します。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<etask> = <pwmled>.pulse(fade_in_time=1.0, fade_out_time=1.0, n=None)
-```
+    <etask> = <pwmled>.pulse(fade_in_time=1.0, fade_out_time=1.0, n=None)
 
-#### 引数一覧 <!-- omit in toc -->
+#### 引数： <!-- omit in toc -->
 
-| 名前          | 型        | 内容                                                               |
-| ------------- | --------- | ------------------------------------------------------------------ |
-| fade_in_time  | float     | duty比率を最低値から最高値まで変化させる時間（秒）、省略時は 0.0秒 |
-| fade_out_time | float     | duty比率を最高値から最低値まで変化させる時間（秒）、省略時は 0.0秒 |
-| n             | int, None | 点滅回数。0 または Noneのときは永久に繰り返す                      |
+| 名前          | 型        | 内容                                           |
+| ------------- | --------- | --------------------------------------------- |
+| fade_in_time  | float     | 点灯開始時に、duty比を最低値から最高値まで変化させる時間（秒）を指定します。省略時のデフォルトは 0.0 秒です。 |
+| fade_out_time | float     | 点灯終了時に、duty比を最高値から最低値まで変化させる時間（秒）を指定します。省略時のデフォルトは 0.0 秒です。 |
+| n             | int | 点滅回数を指定します。0 または None を指定すると、永久に繰り返します。 |
 
 <br>
 
 ### 6.14. 　y_pulse()　PWMLEDを連続して点滅させるタスクジェネレータ
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<generator> = <pwmled>.y_pulse(fade_in_time, fade_out_time, n)
-```
+    <generator> = <pwmled>.y_pulse(fade_in_time, fade_out_time, n)
 
 <br>
 
 ### 6.15. 　stop_background()　バックグラウンド処理を停止する
 
-- blinkや fadeinなどのバックグラウンド処理を停止する
-- sync=True を指定すると、バックグラウンド処理を syncポイントまで実行した後停止する。False の場合は即停止する<br>（指定を省略すると True）
+blinkや fadein などのバックグラウンド処理を停止します。
 
-#### 書式 <!-- omit in toc -->
+- sync=True を指定すると、バックグラウンド処理を同期ポイントまで実行した後停止します。False の場合は即座に停止します（省略時のデフォルトは True です）。
 
-```python
-<pwmled>.stop_background(sync=True)
-```
+#### 書式： <!-- omit in toc -->
+
+    <pwmled>.stop_background(sync=True)
 
 <br>
 
-### 6.16. 　stop_background_and_execute()　バックグラウンド処理を停止した後、指定処理を実行する
+### 6.16. 　stop_background_and_execute()　バックグラウンド処理停止後に指定処理を実行する
 
-- blinkや fadeinなどのバックグラウンド処理を停止した後 func を実行する
-- sync=True を指定すると、バックグラウンド処理を syncポイントまで実行した後停止する。False の場合は即停止する<br>（指定を省略すると False）
+- blinkや fadein などのバックグラウンド処理を停止した後、指定された関数 func を実行します。
+- sync=True を指定すると、バックグラウンド処理を同期ポイントまで実行した後停止します。False の場合は即座に停止します（省略時のデフォルトは False です）。
 
-#### 書式 <!-- omit in toc -->
+#### 書式： <!-- omit in toc -->
 
-```python
-<pwmled>._after_background(func, sync=False)
-```
+    <pwmled>._after_background(func, sync=False)
 
 <br>
 
