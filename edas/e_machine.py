@@ -446,8 +446,7 @@ class LED(Signal):
     def __init__(self, pno, value=0, invert=False):
         self._notinvert = not invert
         super().__init__(Pin(pno, Pin.OUT), invert=invert)
-        # if value is not None:
-        #     self.value(value)
+        self.value(value)
         self._background = None
 
     def stop_background(self, sync=True):
