@@ -311,19 +311,19 @@ class Edas():
 
     @staticmethod
     def y_oneshot(func):
-        ''' funcを一回だけ実行してすぐ終了するジェネレータ関数 '''
+        ''' funcを一回だけ実行してすぐ終了するタスクジェネレータ '''
         func()
         return
         yield "dummy for oneshot generator"
 
-    @staticmethod
-    def y_wait_while(wait_ms):
-        ''' wait_ms 時間が経過するまで yieldを繰り返す。<br>
-            yield from Edas.wait_while(wait_ms) で呼び出すこと。
-        '''
-        _now = Edas.ticks_ms()
-        while time.ticks_diff(Edas.ticks_ms(), _now) < wait_ms:
-            yield
+    # @staticmethod
+    # def y_wait_while(wait_ms):
+    #     ''' wait_ms 時間が経過するまで yieldを繰り返す。<br>
+    #         yield from Edas.wait_while(wait_ms) で呼び出すこと。
+    #     '''
+    #     _now = Edas.ticks_ms()
+    #     while time.ticks_diff(Edas.ticks_ms(), _now) < wait_ms:
+    #         yield
 
 
 class CheckTime():
@@ -355,11 +355,11 @@ class CheckTime():
             self._ms = time.ticks_add(self._ms, int(wait_ms))
             
 
-    def wait(self, wait_ms) -> bool:
-        ''' wait_ms 時間が経過するまでTrue、経過したらFalseになる。
-        '''
-        if time.ticks_diff(Edas.ticks_ms(), self._ms) < int(wait_ms):
-            return True
-        return False
+    # def wait(self, wait_ms) -> bool:
+    #     ''' wait_ms 時間が経過するまでTrue、経過したらFalseになる。
+    #     '''
+    #     if time.ticks_diff(Edas.ticks_ms(), self._ms) < int(wait_ms):
+    #         return True
+    #     return False
 
 
