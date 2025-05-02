@@ -23,8 +23,8 @@ Raspberry Pi Pico 上でシングルスレッドのマルチタスクを実現�
 
 | ファイル名  | ver.   | 日付       | 内容                 |
 | ----------- | ------ | ---------- | -------------------- |
-| e_module.py | 作成中 | 2025/04/24 | モジュール本体       |
-| e_module.md | 作成中 | 2025/04/24 | ドキュメント（本書） |
+| e_module.py | 作成中 | 2025/05/02 | モジュール本体       |
+| e_module.md | 作成中 | 2025/05/02 | ドキュメント（本書） |
 
 <br>
 
@@ -56,10 +56,10 @@ Raspberry Pi Pico 上でシングルスレッドのマルチタスクを実現�
   - [1.5. 　start()　タスクを開始/再開する](#15-startタスクを開始再開する)
   - [1.6. 　pause()　タスクを中断する](#16-pauseタスクを中断する)
   - [1.7. 　stop() タスクを終了する](#17-stop-タスクを終了する)
-  - [1.8. 　ticks\_ms() 　ハンドラーの現在の turnの時刻(msec)を取得する](#18-ticks_ms-ハンドラーの現在の-turnの時刻msecを取得する)
-  - [1.9. 　y\_wait\_while() 　指定時間（msec）が経過するまで yieldを繰り返すタスクジェネレータ](#19-y_wait_while-指定時間msecが経過するまで-yieldを繰り返すタスクジェネレータ)
-  - [1.10. 　after()　指定時間（秒）後に functionを実行する](#110-after指定時間秒後に-functionを実行する)
-  - [1.11. 　after\_ms()　指定時間（msec）後に functionを実行する](#111-after_ms指定時間msec後に-functionを実行する)
+  - [1.8. 　ticks\_ms() 　イベントループの現在の turn 時刻(ミリ秒)を取得する](#18-ticks_ms-イベントループの現在の-turn-時刻ミリ秒を取得する)
+  - [1.9. 　after()　指定時間（秒）後に functionを実行する](#19-after指定時間秒後に-functionを実行する)
+  - [1.10. 　after\_ms()　指定時間（ミリ秒）後に functionを実行する](#110-after_ms指定時間ミリ秒後に-functionを実行する)
+  - [1.11. 　y\_oneshot()　指定の関数を一回だけ実行するタスクジェネレータ](#111-y_oneshot指定の関数を一回だけ実行するタスクジェネレータ)
   - [1.12. 　show\_edas()　動作中のタスクの一覧を表示するユーティリティメソッド](#112-show_edas動作中のタスクの一覧を表示するユーティリティメソッド)
   - [1.13. 　stop\_edas()　動作中のタスクを終了するユーティリティメソッド](#113-stop_edas動作中のタスクを終了するユーティリティメソッド)
   - [1.14. 　付録](#114-付録)
@@ -70,8 +70,7 @@ Raspberry Pi Pico 上でシングルスレッドのマルチタスクを実現�
   - [2.2. 　set()　基準時刻を trun時刻、または指定時刻に変更する](#22-set基準時刻を-trun時刻または指定時刻に変更する)
   - [2.3. 　add\_ms()　基準時刻を加算する](#23-add_ms基準時刻を加算する)
   - [2.4. 　ref\_time()　基準時刻を返す](#24-ref_time基準時刻を返す)
-  - [2.5. 　y\_wait()　wait\_ms(msec) 時間が経過するまで yieldを繰り返す](#25-y_waitwait_msmsec-時間が経過するまで-yieldを繰り返す)
-  - [2.6. 　wait(wait\_ms)　wait\_ms(msec) 指定時間経過判定（非推奨）](#26-waitwait_mswait_msmsec-指定時間経過判定非推奨)
+  - [2.5. 　y\_wait()　指定時間が経過するまで yieldを繰り返すタスクジェネレータ](#25-y_wait指定時間が経過するまで-yieldを繰り返すタスクジェネレータ)
 
 <br>
 <br>
@@ -182,9 +181,9 @@ sync=True を指定すると、タスクを同期ポイントで終了します�
 
 <br>
 
-### 1.8. 　ticks_ms() 　ハンドラーの現在の turnの時刻(msec)を取得する
+### 1.8. 　ticks_ms() 　イベントループの現在の turn 時刻(ミリ秒)を取得する
 
-タイマーループの現在のターン開始時刻（ミリ秒）を取得するクラスメソッドです。
+イベントループの現在のターン開始時刻（ミリ秒）を取得するクラスメソッドです。
 
 複数のタスク間で、同一ターンの同期を取る場合に使用します。
 
@@ -194,19 +193,7 @@ sync=True を指定すると、タスクを同期ポイントで終了します�
 
 <br>
 
-### 1.9. 　y_wait_while() 　指定時間（msec）が経過するまで yieldを繰り返すタスクジェネレータ
-
-指定時間（ミリ秒）が経過するまで yield を繰り返すタスクジェネレータです。
-
-タスクジェネレータ内で時間調整をするために使用し、yield from 構文で呼び出します。
-
-#### 書式： <!-- omit in toc -->
-
-    yield from Edas.wait_while(wait_ms)
-
-<br>
-
-### 1.10. 　after()　指定時間（秒）後に functionを実行する
+### 1.9. 　after()　指定時間（秒）後に functionを実行する
 
 バックグラウンドで動作し、指定時間 (delay: float, 秒) 経過後に function を実行します。
 
@@ -218,13 +205,42 @@ sync=True を指定すると、タスクを同期ポイントで終了します�
 
 <br>
 
-### 1.11. 　after_ms()　指定時間（msec）後に functionを実行する
+### 1.10. 　after_ms()　指定時間（ミリ秒）後に functionを実行する
 
 動作は after() と同じですが、指定時間を秒ではなくミリ秒 (delay_ms: int) で指定します。
 
 #### 書式： <!-- omit in toc -->
 
     <etask> = Edas.after_ms(delay_ms, function)
+
+<br>
+
+
+### 1.11. 　y_oneshot()　指定の関数を一回だけ実行するタスクジェネレータ
+
+指定の関数（func）を一回だけ実行して終了するタスクジェネレータです。
+
+
+#### 書式： <!-- omit in toc -->
+
+    <generator> = Edas.y_oneshot(func)
+
+
+#### 使用例： <!-- omit in toc -->
+
+- 動作中のタスク（self._background）を終了させ、終了後に指定関数（func）を実行させる例です。
+
+```python
+    def stop_background_and_execute(self, func, sync=False):
+        ''' blink などのバックグラウンド処理を停止した後 func を実行する '''
+        if self._background:
+            ret = Edas(Edas.y_oneshot(func), previous_task=self._background)
+            self._background.stop(sync)
+        else:
+            ret = func()
+        return ret
+
+```
 
 <br>
 
@@ -258,7 +274,6 @@ name に終了するタスクの名前を指定します。省略時はすべて
 
  [Edas.start_loop()](#11-start_loopイベントループを開始する) で指定する tracelevel に対応する出力内容です。指定した整数以下のレベルの情報が出力されます。<br>
  （例えば、tracelevel=15 を指定すると、0 ～ 15までのトレース情報が出力されます。）
-
 
 | tracelevel | 出力内容                 | 発生タイミング            |
 | ---------- | ------------------------ | ------------------------- |
@@ -337,7 +352,7 @@ CheckTime オブジェクトを生成し、基準時刻を現在の turn 時刻�
 
 ### 2.4. 　ref_time()　基準時刻を返す
 
-現在の基準時刻(msec)を返します。
+現在の基準時刻(ミリ秒)を返します。
 
 #### 書式： <!-- omit in toc -->
 
@@ -345,7 +360,7 @@ CheckTime オブジェクトを生成し、基準時刻を現在の turn 時刻�
 
 <br>
 
-### 2.5. 　y_wait()　wait_ms(msec) 時間が経過するまで yieldを繰り返す
+### 2.5. 　y_wait()　指定時間が経過するまで yieldを繰り返すタスクジェネレータ
 
 タスクジェネレータ内で、指定した時間 (wait_ms: ミリ秒) が経過するまで yield を繰り返します。
 
@@ -356,6 +371,8 @@ update=Trueを指定すると、時間経過後に基準時刻を wait_ms分だ�
     yield from <ctime>.y_wait(wait_ms, update=False)
 
 #### 使用例： <!-- omit in toc -->
+
+- タスクジェネレータ（lblink）内で、ledの点灯時間、消灯時間の調整に y_wait() を使用する例です。
 
 ```python
 import time
@@ -383,7 +400,7 @@ for i in range(10):
 
 <br>
 
-### 2.6. 　wait(wait_ms)　wait_ms(msec) 指定時間経過判定（非推奨）
+<!-- ### 2.6. 　wait(wait_ms)　wait_ms(ミリ秒) 指定時間経過判定（非推奨）
 
 指定した時間 (wait_ms: ミリ秒) が経過するまで True を返し、経過したら False を返します。
 
@@ -393,4 +410,4 @@ for i in range(10):
 
     <True/False> = <ctime>.wait(wait_ms)
 
-<br>
+<br> -->
