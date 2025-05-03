@@ -17,12 +17,14 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 - wlan_info.py（Wi-Fiに接続する情報を格納した設定ファイル）<br>
 → 環境にあわせて書き直してください
 
-## インストール <!-- omit in toc -->
+## インストール方法 <!-- omit in toc -->
 
-Raspberry Pi Pico / Pico W のルート、または libディレクトリへ以下のファイルを配置する。
+本モジュールのファイル（neos.py）と 設定ファイル（wlan_info.py）を、Pico / Pico W のルートディレクトリまたは lib ディレクトリ配下に格納してください。
 
-    neos.py
-    wlan_info.py（wlan_connectを使用する場合に必要）
+    /
+    └── lib
+        └── neos.py
+            wlan_info.py
 
 <br>
 
