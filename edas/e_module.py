@@ -64,7 +64,7 @@ class Edas():
     # __heartbeatON = None
     # __heartbeatOFF = None
 
-    def __init__(self, gen, name=None, previous_task=None, start=True):
+    def __init__(self, gen, name=None, previous_task=None, start=True, terminate_by_sync=False):
 
         assert is_generator(gen), "<gen> must be generator"
 
@@ -75,6 +75,7 @@ class Edas():
         self._state = Edas.NULL     # タスクの動作状態
         self.name = _name           # タスクの名前
         self.type = _type           # タスクのタイプ（コルーチン名）
+        self._terminate_by_sync = terminate_by_sync     # 'SYNC' で終了するかどうか
         self._follows = []          # 後続のタスクリスト
 
         if not previous_task:   # 先行タスク指定なし（単独タスク）
@@ -268,24 +269,26 @@ class Edas():
         else:
             Edas.__traceprint(8, "--> can't find** ", self)
 
-    def pause(self, sync=False):
+    def pause(self, sync=True):
         ''' タスクを中断する '''
+        _sync = sync and self._terminate_by_sync
         if self in Edas.__edata:
             _pstate = self._state
             if self._state in [Edas.EXEC, Edas.S_PAUSE]:
-                self._state = Edas.S_PAUSE if sync else Edas.PAUSE
+                self._state = Edas.S_PAUSE if _sync else Edas.PAUSE
                 Edas.__traceprint(11, "--> pause ", self, previus_state=_pstate)
             else:
                 Edas.__traceprint(8, "--> can't pause** ", self)
         else:
             Edas.__traceprint(8, "--> can't find** ", self)
 
-    def stop(self, sync=False):
+    def stop(self, sync=True):
         ''' タスクを終了する '''
+        _sync = sync and self._terminate_by_sync
         if self in Edas.__edata:
             _pstate = self._state
             if self._state in [Edas.EXEC, Edas.S_PAUSE, Edas.S_END]:
-                self._state = Edas.S_END if sync else Edas.END
+                self._state = Edas.S_END if _sync else Edas.END
                 Edas.__traceprint(11, "--> stop  ", self, previus_state=_pstate)
             elif self._state in [Edas.START, Edas.PAUSE]:
                 self._state = Edas.END

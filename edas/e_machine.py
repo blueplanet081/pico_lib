@@ -44,7 +44,7 @@ class Eloop():
         Edas.loop_stop()
 
     @staticmethod
-    def create_task(gen, name=None, previous_task=None, start=True):
+    def create_task(gen, name=None, previous_task=None, start=True, terminate_by_sync=False):
         ''' 新しいタスクを生成し、イベントループに登録する
 
             args:
@@ -52,12 +52,14 @@ class Eloop():
                 name: str（タスクにつける名前）
                 previous_task: <edas>（先行タスク）
                 start: bool（登録後すぐ実行するかどうか）
+                terminate_by_sync（'SYNC' で終了するかどうか）
             return:
                 <edas> Edasタスクオブジェクト
         '''
 
 
-        return Edas(gen, name=name, previous_task=previous_task, start=start)
+        return Edas(gen, name=name, previous_task=previous_task, start=start,
+                    terminate_by_sync=terminate_by_sync)
 
 
 
@@ -455,7 +457,7 @@ class LED(Signal):
             self._background.stop(sync)
             self._background = None
 
-    def stop_background_and_execute(self, func, sync=False):
+    def stop_background_and_execute(self, func, sync=True):
         ''' blink などのバックグラウンド処理を停止した後 func を実行する '''
         if self._background:
             ret = Edas(Edas.y_oneshot(func), previous_task=self._background)
@@ -514,7 +516,8 @@ class LED(Signal):
         ''' LEDを点滅させる '''
         if self._background:
             self._background.stop()
-        self._background = Edas(self.y_blink(on_time, off_time, n), previous_task=followto)
+        self._background = Edas(self.y_blink(on_time, off_time, n), previous_task=followto,
+                                terminate_by_sync=True)
         return self._background
 
     def flicker(self, interval=1.0, duty=0.5, n=None, followto=None):
@@ -523,7 +526,8 @@ class LED(Signal):
         _off_time = interval - _on_time
         if self._background:
             self._background.stop()
-        self._background = Edas(self.y_blink(_on_time, _off_time, n), previous_task=followto)
+        self._background = Edas(self.y_blink(_on_time, _off_time, n), previous_task=followto,
+                                terminate_by_sync=True)
         return self._background
 
 
@@ -552,7 +556,7 @@ class PWMLED(PWM):
             self._background.stop(sync)
             self._background = None
 
-    def stop_background_and_execute(self, func, sync=False):
+    def stop_background_and_execute(self, func, sync=True):
         ''' blinkや fadeinなどのバックグラウンド処理を停止した後 func を実行する '''
         if self._background:
             ret = Edas(Edas.y_oneshot(func), previous_task=self._background)
@@ -656,7 +660,8 @@ class PWMLED(PWM):
         ''' PWMLEDを連続して点滅させる。点滅時にfadein/fadeoutを行う '''
         if self._background:
             self._background.stop()
-        self._background = Edas(self.y_pulse(fade_in_time, fade_out_time, n), name="pulse")
+        self._background = Edas(self.y_pulse(fade_in_time, fade_out_time, n), name="pulse",
+                                terminate_by_sync=True)
         return self._background
 
     def _toggle(self):
@@ -685,8 +690,8 @@ if __name__ == '__main__':
 
     led1 = Signal(16, Pin.OUT)
     led2 = Signal(17, Pin.OUT)
-    task1 = Eloop.create_task(blink(led1, 1000, 1000, 5))
-    task2 = Eloop.create_task(blink(led2, 1000, 1000, 5), previous_task=task1)
+    task1 = Eloop.create_task(blink(led1, 1000, 1000, 5), terminate_by_sync=True)
+    task2 = Eloop.create_task(blink(led2, 1000, 1000, 5), previous_task=task1, terminate_by_sync=True)
     # Eloop.start()
     # Edas.start_loop(tracelevel=18, period=10)
     Eloop.start(tracelevel=18, loop_interval=10)

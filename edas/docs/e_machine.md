@@ -177,7 +177,7 @@ e_module の Edas() クラスをより使いやすくするためのラッパー
 
 #### 書式： <!-- omit in toc -->
 
-    <etask> = Eloop.create_task(gen, name=None, previous_task=None, start=True):
+    <etask> = Eloop.create_task(gen, name=None, previous_task=None, start=True, terminate_by_sync=False):
 
 #### 戻り値： <!-- omit in toc -->
 
@@ -191,6 +191,7 @@ e_module の Edas() クラスをより使いやすくするためのラッパー
 | name          | str         | タスクに付ける名前の文字列です。省略時は適当な名前が自動的に生成されます。 |
 | previous_task | `<etask>`   | 指定された場合、このタスクは指定されたタスクの終了後に実行されます。      |
 | start         | bool        | True（デフォルト）の場合、生成したタスクを即時開始します。False の場合は start() メソッドによる開始指示があるまで停止します。 |
+|terminate_by_sync | bool | Truneの場合、タスクの終了時に 'SYNC'を待ちます。False（デフォルト）の場合は即時終了します。|
 
 - タスクとして動作させるジェネレータオブジェクト、またはそのソースコードを以下では「タスクジェネレータ」と呼びます。
 
