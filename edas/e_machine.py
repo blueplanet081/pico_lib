@@ -129,8 +129,12 @@ class Button():
 
     __plist = KeyList()     # Pinを登録するリスト（Dicもどき）
 
-    __loop_period = 100              # Timerの周期
-    __loop_point = time.ticks_ms()   # ボタンloopの起点
+    __loop_period = 100     # Timerの周期
+    __loop_point = 0        # ボタンloopの起点
+    # __loop_point = time.ticks_ms()   # ボタンloopの起点
+
+    __touched_point = 0     # ボタンが最後に触れられた時間
+    __idle_time_ms = 0      # ボタンが触られなかった時間
 
     __tracelevel = 0
     __default_invert = True
@@ -240,10 +244,17 @@ class Button():
         if period:
             cls.__loop_period = min(1000, max(10, period))
 
+        cls.__loop_point = time.ticks_ms()      # ボタンloopの起点
+        cls.__touched_point = Edas.ticks_ms()
+
         cls.__tracelevel = tracelevel
         cls._trace(5, f"* {Button.__loop_period=}")
 
         return Edas(cls._bloop(), name=name)
+
+    @classmethod
+    def idle_time(cls):
+        return cls.__idle_time_ms / 1000
 
     @classmethod
     def str_reason(cls, reason):
@@ -279,6 +290,7 @@ class Button():
                 _isON = myself._pin.value() != myself._invert     # 今回の状態
                 if not myself._wasON:       # 前回が OFF
                     if _isON:                   # 今回は ON  -> ボタンが押された！
+                        cls.__touched_point = Edas.ticks_ms()        # 触られた！！
                         _reason = cls.PRESSED       # 押された！
                         myself.is_pressed = True
                         myself.count += 1
@@ -299,6 +311,7 @@ class Button():
                             myself._t_repeat_ms = myself._hold_ms
 
                 else:  # 前回が ON
+                    cls.__touched_point = Edas.ticks_ms()            # 触られた！！
                     if _isON:               # 今回も ON  -> 押し続けられた！
                         if myself._long_press_mode == cls.HELD and not myself._isHeld:  # 長押し判定
                             if time.ticks_diff(time.ticks_ms(), myself._dpoint)\
@@ -337,6 +350,7 @@ class Button():
                     myself._do_function()
 
                 myself._wasON = _isON   # 今回の状態を前回の状態として保持
+            cls.__idle_time_ms = time.ticks_diff(Edas.ticks_ms(), cls.__touched_point)
             yield
 
     def _do_function(self):
@@ -706,4 +720,7 @@ if __name__ == '__main__':
     for i in range(1000):
         with Eloop.Suspender():
             print(f"---- round {i} ----")
+        print(f"{Button.idle_time()=}")
+        if Button.idle_time() > 20.0:
+            break
         time.sleep_ms(3000)
