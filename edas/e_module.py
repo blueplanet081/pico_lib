@@ -34,9 +34,17 @@ class Edas():
     EXEC = const(3)     # 実行中
     S_PAUSE = const(4)  # 実行中で SYNC停止待ち
     S_END = const(5)    # 実行中で SYNC終了待ち
-    END = const(6)      # 終了（deleteに移行）
+    END = const(6)      # 終了（終了リストに移行）
+    DONE = const(9)     # 終了（終了リストに以降済み）
 
-    _state_list = ["NULL", "START", "PAUSE", "EXEC", "S_PAUSE", "S_END", "END", "unknown"]
+    _state_list = ["NULL", "START", "PAUSE", "EXEC", "S_PAUSE", "S_END", "END",
+                   "unknown", "unknown", "DONE", "unknown"]
+
+    # タスクの性質
+    CORE = const(0)
+    PERSISTENT = const(1)
+    BASIC = const(2)
+
 
     # タスクのセッション実行結果
     SYNC = const(22)    # SYNCポイントに達した
@@ -46,6 +54,7 @@ class Edas():
 
 
     __edata = []                # タスクのリスト
+    __tdata = []                # 終了したタスクのリスト
 
     __interval = 100            # イベントループの実行間隔(msec)
     __interval_min = 5          # 実行間隔の最小値
@@ -64,7 +73,8 @@ class Edas():
     # __heartbeatON = None
     # __heartbeatOFF = None
 
-    def __init__(self, gen, name=None, previous_task=None, start=True, terminate_by_sync=False):
+    def __init__(self, gen, name=None, previous_task=None, start=True,
+                 terminate_by_sync=False, task_nature=BASIC):
 
         assert is_generator(gen), "<gen> must be generator"
 
@@ -76,7 +86,9 @@ class Edas():
         self.name = _name           # タスクの名前
         self.type = _type           # タスクのタイプ（コルーチン名）
         self._terminate_by_sync = terminate_by_sync     # 'SYNC' で終了するかどうか
+        self._task_nature = task_nature                 # タスクの性質
         self._follows = []          # 後続のタスクリスト
+        self._result = None         # タスクの実行結果
 
         if not previous_task:   # 先行タスク指定なし（単独タスク）
             # start=Trueの時は開始、start=Falseの時は停止（start待ち）
@@ -129,7 +141,7 @@ class Edas():
             timer.init(mode=Timer.ONE_SHOT, period=cls.__freezetime, callback=cls._handler)
             return
 
-        # 整列処理
+        # 事前処理
         cls.__traceprint(24, "alignment process.....")
         cls.__ticks_ms = time.ticks_ms()
         for edas in list(cls.__edata):
@@ -140,8 +152,12 @@ class Edas():
 
             elif edas._state == cls.END:    # 終了タスク
                 cls._set_follows(edas)          # 後続タスクを「実行中」に変更
-                cls.__traceprint(14, "      >>> ", edas, aftermessage="  deleted")
                 cls.__edata.remove(edas)        # END -> タスクリストから削除
+                edas._state = cls.DONE          
+                cls.__traceprint(14, "      >>> ", edas, aftermessage="  deleted")
+                cls.__tdata.append(edas)
+                if edas._result:
+                    cls.__traceprint(14, f"     {edas._result=}")
 
         # 実行処理
         # if cls.__heartbeatON:
@@ -154,7 +170,8 @@ class Edas():
 
             try:
                 _ret = next(edas._gen)      # ジェネレータ・オブジェクトを 1ステップ実行
-            except StopIteration:       # ジェネレータ・オブジェクトが終了
+            except StopIteration as e:       # ジェネレータ・オブジェクトが終了
+                edas._result = e
                 _ret = cls.IEND
 
             _pstate = edas._state
@@ -195,7 +212,7 @@ class Edas():
                 cls.__traceprint(8, "--> can't find**", fedas)
 
     @classmethod
-    def start_loop(cls, loop_interval=None, tracelevel=0):
+    def loop_start(cls, loop_interval=None, tracelevel=0):
         ''' イベントループを開始する '''
         # cls.__heartbeatON = LED("LED")
 
@@ -258,14 +275,14 @@ class Edas():
             else:
                 print(f"{message}")
 
-    def start(self):
+    def resume(self):
         ''' タスクを開始/再開する '''
         if self in Edas.__edata:
             if self._state == Edas.PAUSE:
                 self._state = Edas.START
-                Edas.__traceprint(11, "--> start ", self, previus_state=Edas.PAUSE)
+                Edas.__traceprint(11, "--> resume ", self, previus_state=Edas.PAUSE)
             else:
-                Edas.__traceprint(8, "--> can't start** ", self)
+                Edas.__traceprint(8, "--> can't resume** ", self)
         else:
             Edas.__traceprint(8, "--> can't find** ", self)
 
@@ -282,21 +299,28 @@ class Edas():
         else:
             Edas.__traceprint(8, "--> can't find** ", self)
 
-    def stop(self, sync=True):
+    def cancel(self, sync=True):
         ''' タスクを終了する '''
         _sync = sync and self._terminate_by_sync
         if self in Edas.__edata:
             _pstate = self._state
             if self._state in [Edas.EXEC, Edas.S_PAUSE, Edas.S_END]:
                 self._state = Edas.S_END if _sync else Edas.END
-                Edas.__traceprint(11, "--> stop  ", self, previus_state=_pstate)
+                Edas.__traceprint(11, "--> cancel  ", self, previus_state=_pstate)
             elif self._state in [Edas.START, Edas.PAUSE]:
                 self._state = Edas.END
-                Edas.__traceprint(11, "--> stop  ", self, previus_state=_pstate)
+                Edas.__traceprint(11, "--> cancel  ", self, previus_state=_pstate)
             else:
-                Edas.__traceprint(8, "--> can't stop**  ", self)
+                Edas.__traceprint(8, "--> can't cancel**  ", self)
         else:
             Edas.__traceprint(8, "--> can't find** ", self)
+
+    def done(self):
+        ''' タスクの終了を判定する '''
+        return (self._state == Edas.DONE)
+
+    def result(self):
+        return self._result
 
     @classmethod
     def after(cls, delay, function):
