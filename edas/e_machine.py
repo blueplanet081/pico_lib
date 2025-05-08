@@ -44,7 +44,7 @@ class Eloop():
         Edas.loop_stop()
 
     @staticmethod
-    def create_task(gen, name=None, previous_task=None, start=True, terminate_by_sync=False):
+    def create_task(gen, name=None, previous_task=None, pause=False, terminate_by_sync=False):
         ''' 新しいタスクを生成し、イベントループに登録する
 
             args:
@@ -58,8 +58,13 @@ class Eloop():
         '''
 
 
-        return Edas(gen, name=name, previous_task=previous_task, start=start,
+        return Edas(gen, name=name, previous_task=previous_task, pause=pause,
                     terminate_by_sync=terminate_by_sync)
+
+    @staticmethod
+    def idle_time():
+        ''' 通常のタスク（task_nature=BASIC）が動作していない時間を返す '''
+        return Edas.idle_time()
 
 
 
@@ -250,7 +255,7 @@ class Button():
         cls.__tracelevel = tracelevel
         cls._trace(5, f"* {Button.__loop_period=}")
 
-        return Edas(cls._bloop(), name=name)
+        return Edas(cls._bloop(), name=name, task_nature=Edas.PERSISTENT)
 
     @classmethod
     def idle_time(cls):
@@ -721,7 +726,10 @@ if __name__ == '__main__':
         with Eloop.Suspender():
             print(f"---- round {i} ----")
         print(f"{Button.idle_time()=}")
-        if Button.idle_time() > 10.0:
+        print(f"{Edas._get_taskcount()=}")
+        print(f"{Edas._get_taskcount(Edas.BASIC)=}")
+        print(f"{Edas.idle_time()=}")
+        if Button.idle_time() > 30.0:
             break
         time.sleep_ms(3000)
 

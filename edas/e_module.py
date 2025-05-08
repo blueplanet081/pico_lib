@@ -41,10 +41,13 @@ class Edas():
                    "unknown", "unknown", "DONE", "unknown"]
 
     # タスクの性質
-    CORE = const(0)
-    PERSISTENT = const(1)
-    BASIC = const(2)
-
+    CORE = const(0)         # システム制御用
+    PERSISTENT = const(1)   # 継続的なタスク
+    BASIC = const(2)        # 通常タスク
+    VOLATILE = const(3)     # いつ終了させても問題ないタスク
+    UNKNOWN = const(4)      # 管理対象外
+    # タスクの性質のセット
+    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, VOLATILE}
 
     # タスクのセッション実行結果
     SYNC = const(22)    # SYNCポイントに達した
@@ -56,6 +59,8 @@ class Edas():
     __edata = []                # タスクのリスト
     __tdata = []                # 終了したタスクのリスト
 
+    __task_count = [0] * (len(TASK_NATURE_SET) + 1)     # 実行中のタスクのカウント（性質別）
+
     __interval = 100            # イベントループの実行間隔(msec)
     __interval_min = 5          # 実行間隔の最小値
     __is_loop_active = False    # イベントループが実行中か
@@ -63,6 +68,8 @@ class Edas():
     __timer = Timer(TIMER_ID)   # タイマーモジュール
 
     __ticks_ms = time.ticks_ms()    # handlerの現在のturnの開始時刻（同期用）
+    __touched_point = __ticks_ms    # タスク実行ポイント（最後に BASICのタスクを実行した時刻）
+    __taskidle_time_ms = 0          # タスクが実行されない時間（msef）
     __endpoint = 0              # handlerの終了時刻（デバッグ用）
     __entpoint = 0              # handlerの開始時刻（デバッグ用）
 
@@ -73,7 +80,7 @@ class Edas():
     # __heartbeatON = None
     # __heartbeatOFF = None
 
-    def __init__(self, gen, name=None, previous_task=None, start=True,
+    def __init__(self, gen, name=None, previous_task=None, pause=False,
                  terminate_by_sync=False, task_nature=BASIC):
 
         assert is_generator(gen), "<gen> must be generator"
@@ -86,13 +93,16 @@ class Edas():
         self.name = _name           # タスクの名前
         self.type = _type           # タスクのタイプ（コルーチン名）
         self._terminate_by_sync = terminate_by_sync     # 'SYNC' で終了するかどうか
-        self._task_nature = task_nature                 # タスクの性質
         self._follows = []          # 後続のタスクリスト
+        self._task_nature = task_nature \
+                            if task_nature in Edas.TASK_NATURE_SET \
+                            else Edas.UNKNOWN       # タスクの性質
+
         self._result = None         # タスクの実行結果
 
         if not previous_task:   # 先行タスク指定なし（単独タスク）
-            # start=Trueの時は開始、start=Falseの時は停止（start待ち）
-            self._state = Edas.START if start else Edas.PAUSE
+            # pause=Falseの時は開始、pause=Trueの時は停止（resume待ち）
+            self._state = Edas.START if not pause else Edas.PAUSE
             Edas.__traceprint(11, "--> init ", self)
 
         else:                   # 先行タスク指定あり
@@ -144,6 +154,7 @@ class Edas():
         # 事前処理
         cls.__traceprint(24, "alignment process.....")
         cls.__ticks_ms = time.ticks_ms()
+
         for edas in list(cls.__edata):
 
             if edas._state == cls.START:    # 開始/再開タスク
@@ -162,12 +173,16 @@ class Edas():
         # 実行処理
         # if cls.__heartbeatON:
         #     cls.__heartbeatON.on()
+
+        # 実行中のタスクのカウント（性質別）をクリアしている
+        cls.__task_count[:] = [0] * (len(cls.TASK_NATURE_SET) + 1)
+
         cls.__traceprint(22, "turn.....")
         for edas in list(cls.__edata):
             cls.__traceprint(32, "  *     ", edas)
             if edas._state not in [cls.EXEC, cls.S_PAUSE, cls.S_END]:
                 continue
-
+            cls.__task_count[edas._task_nature] += 1
             try:
                 _ret = next(edas._gen)      # ジェネレータ・オブジェクトを 1ステップ実行
             except StopIteration as e:       # ジェネレータ・オブジェクトが終了
@@ -188,6 +203,13 @@ class Edas():
                     cls.__traceprint(15, "   > SYNC ", edas, previus_state=_pstate)
                 else:                           # S_PAUSE、S_END 以外は何もしない
                     cls.__traceprint(18, "   > SYNC ", edas)
+
+        # タスクアイドルタイム（nature=BASIC のタスクが動いていない時間）を計算
+        if cls.__task_count[cls.BASIC]:     # タスクが実行されている
+            cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
+            cls.__taskidle_time_ms = 0
+        else:                               # タスクアイドル
+            cls.__taskidle_time_ms = time.ticks_diff(cls.__ticks_ms, cls.__touched_point)
 
         _timespent = time.ticks_diff(time.ticks_ms(), cls.__entpoint)
         cls.__traceprint(28, f"  +   -- timespent={_timespent}")
@@ -222,6 +244,7 @@ class Edas():
             cls.__interval = max(loop_interval, cls.__interval_min)
         if not cls.__is_loop_active:
             cls.__is_loop_active = True
+            cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
             cls.__timer.init(mode=Timer.ONE_SHOT, period=cls.__interval, callback=cls._handler)
 
     @classmethod
@@ -251,6 +274,21 @@ class Edas():
     def _str_state(cls, state):
         ''' 指定タスクの状態を文字列で返す（デバッグ用） '''
         return cls._state_list[min(state, len(cls._state_list))]
+
+    @classmethod
+    def _get_taskcount(cls, nature = None):
+        ''' 直前の turnで、それぞれの性質のタスクが動いた本数を返す '''
+        if nature in cls.TASK_NATURE_SET:
+            return cls.__task_count[nature]
+        elif nature == cls.UNKNOWN:
+            return cls.__task_count[cls.UNKNOWN]
+        else:
+            return sum(cls.__task_count)
+
+    @classmethod
+    def idle_time(cls):
+        ''' 通常のタスク（task_nature=BASIC）が動作していない時間を返す '''
+        return cls.__taskidle_time_ms / 1000
 
     @classmethod
     def __traceprint(cls, level, message, myself=None, previus_state=None, aftermessage=""):
