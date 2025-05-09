@@ -1,3 +1,5 @@
+<a id="document_top"></a>
+
 # e_machine モジュール説明書　 <!-- omit in toc -->
 
 シングルスレッドでマルチタスクを実現する e_module の配下で、押しボタンや LED などの制御を行うためのモジュールです。
@@ -66,6 +68,10 @@ for i in range(1000):
 ```
 
 <br>
+
+[ドキュメント先頭に戻る](#document_top)
+
+<a id="class_list"></a>
 
 ## クラス一覧 <!-- omit in toc -->
 
@@ -142,6 +148,8 @@ for i in range(1000):
 <br>
 <br>
 
+[ドキュメント先頭に戻る](#document_top)
+
 ---
 
 ## 1. 　class Eloop()　マルチタスクを実行するクラス
@@ -162,6 +170,8 @@ e_module の Edas() クラスをより使いやすくするためのラッパー
 | ------------- | --------------- | -------------------------------------------------- |
 | loop_interval | int | タイマーループの間隔をミリ秒単位で指定します。省略時は規定値（100msec）、または現在の値が使用されます。 |
 | tracelevel    | int | トレース情報出力レベル（デバッグ用）を指定します。省略時は 0（出力しない）です。   |
+
+- トレース情報出力レベルは [e_module 説明書の、付録１ トレース情報出力レベル](e_module.md#appendix01)を参照してください。
 
 <br>
 
@@ -259,7 +269,7 @@ sync=False を指定すると、タスクは即時に終了します。<br>
 
 #### 書式： <!-- omit in toc -->
 
-    <bool> = <etask>.cancel()
+    <bool> = <etask>.done()
 
 <br>
 
@@ -293,6 +303,8 @@ with Eloop.Suspender(freezetime=5):
 
 <br>
 <br>
+
+[クラス一覧に戻る](#class_list)
 
 ---
 
@@ -461,6 +473,8 @@ with Eloop.Suspender(freezetime=5):
 
 ### 2.9. 付録
 
+<a id="appendix01"></a>
+
 #### 2.9.1. 　付録１　ボタンのモードの指定
 
 ボタンの動作モードは、Button() コンストラクタ呼び出し時の hold_time および repeat_time 引数の設定によって決定されます。
@@ -473,6 +487,8 @@ with Eloop.Suspender(freezetime=5):
 | 長押し   | 指定あり  | なし        | held_time で長押しを判定します。                |
 
 <br>
+
+<a id="appendix02"></a>
 
 #### 2.9.2. 　付録２　コールバック関数の呼び出し契機
 
@@ -492,6 +508,8 @@ with Eloop.Suspender(freezetime=5):
 
 <br>
 
+<a id="appendix03"></a>
+
 #### 2.9.3. 　付録３　状態コード
 
 プログラム内部で使用する状態コードと、状態を表す文字列の対応を示します。
@@ -506,6 +524,8 @@ with Eloop.Suspender(freezetime=5):
 | 5以上      | "unknown"        | 未定義の状態です。                   |
 
 <br>
+
+<a id="appendix04"></a>
 
 #### 2.9.4. 　付録４　特別引数 myself
 
@@ -529,6 +549,8 @@ on_xxxx で指定するコールバック関数のキーワード引数に mysel
 
 <br>
 
+<a id="appendix05"></a>
+
 #### 2.9.5. 　付録５　Button情報の取得
 
 外部から以下の情報を取得できます。
@@ -538,6 +560,8 @@ on_xxxx で指定するコールバック関数のキーワード引数に mysel
 | `<button>`.is_pressed | bool | ボタンが現在押されているかどうかを示します。 |
 
 <br>
+
+<a id="appendix06"></a>
 
 #### 2.9.6. 　付録６　トレース情報出力レベル
 
@@ -553,6 +577,8 @@ Button.start() で指定する tracelevel に対応する出力内容です。�
 
 <br>
 <br>
+
+[クラス一覧に戻る](#class_list)
 
 ---
 
@@ -590,6 +616,8 @@ bootsel ボタンが押されている場合は 1 を、押されていない場
 <br>
 <br>
 
+[クラス一覧に戻る](#class_list)
+
 ---
 
 ## 4. 　class Mu()　Instant Closureクラス
@@ -625,6 +653,8 @@ bootsel ボタンが押されている場合は 1 を、押されていない場
 
 <br>
 <br>
+
+[クラス一覧に戻る](#class_list)
 
 ---
 
@@ -775,6 +805,8 @@ blink などのバックグラウンド処理を停止した後、指定され�
 
 <br>
 <br>
+
+[クラス一覧に戻る](#class_list)
 
 ---
 
