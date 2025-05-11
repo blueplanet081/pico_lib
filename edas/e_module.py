@@ -16,7 +16,7 @@ def is_generator(obj):
 
 class Edas():
     ''' 並行処理クラス '''
-    class paused():
+    class Suspender():
         ''' with構文を使ってturnの開始を一時的にfreezeさせるクラス '''
         def __init__(self, freezetime=5):
             self.freezetime = freezetime
@@ -45,9 +45,12 @@ class Edas():
     PERSISTENT = const(1)   # 継続的なタスク
     BASIC = const(2)        # 通常タスク
     VOLATILE = const(3)     # いつ終了させても問題ないタスク
-    UNKNOWN = const(4)      # 管理対象外
+    FLASH = const(4)
+    UNKNOWN = const(5)      # 管理対象外
     # タスクの性質のセット
-    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, VOLATILE}
+    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, VOLATILE, FLASH}
+
+    _nature_list = ["CORE", "PERSISTENT", "BASIC", "VOLATILE", "FLASH", "UNKNOWN"]
 
     # タスクのセッション実行結果
     SYNC = const(22)    # SYNCポイントに達した
@@ -70,6 +73,7 @@ class Edas():
     __ticks_ms = time.ticks_ms()    # handlerの現在のturnの開始時刻（同期用）
     __touched_point = __ticks_ms    # タスク実行ポイント（最後に BASICのタスクを実行した時刻）
     __taskidle_time_ms = 0          # タスクが実行されない時間（msef）
+    __task_is_idle = False          # turn中、BASICのタスクが実行されなかったら True
     __endpoint = 0              # handlerの終了時刻（デバッグ用）
     __entpoint = 0              # handlerの開始時刻（デバッグ用）
 
@@ -208,10 +212,13 @@ class Edas():
         if cls.__task_count[cls.BASIC]:     # タスクが実行されている
             cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
             cls.__taskidle_time_ms = 0
+            cls.__task_is_idle = False
         else:                               # タスクアイドル
             cls.__taskidle_time_ms = time.ticks_diff(cls.__ticks_ms, cls.__touched_point)
+            cls.__task_is_idle = True
 
         _timespent = time.ticks_diff(time.ticks_ms(), cls.__entpoint)
+        cls.__traceprint(22, f"  +   -- taskcount={cls.__task_count}")
         cls.__traceprint(28, f"  +   -- timespent={_timespent}")
         _period = max(cls.__interval - _timespent, cls.__interval_min)
         # if cls.__heartbeatON:
@@ -253,6 +260,26 @@ class Edas():
         cls.__is_loop_active = False
 
     @classmethod
+    def cancel_basic_tasks(cls, sync=True):
+        ''' 動作中の全ての通常タスク（task_nature=BASIC）を終了する '''
+        for edas in list(cls.__edata):
+            # print(f"name={edas.name}, stat={edas._state}, nature={edas._task_nature}")
+            if edas._task_nature == Edas.BASIC:
+                edas.cancel(sync=sync)
+
+    @classmethod
+    def wait_for_idle(cls, timeout=1.0):
+        ''' 動作中の全ての通常タスク（task_nature=BASIC）の終了を待つ '''
+        _wtimeout = int(timeout * 1000)
+        _spoint = time.ticks_ms()
+        while(time.ticks_diff(time.ticks_ms(), _spoint) < _wtimeout):
+            if cls.__task_is_idle:
+                # print("end")
+                break
+        # else:
+        #     print("timeout")
+
+    @classmethod
     def show_edas(cls):
         ''' タスクリスト中のタスクの一覧を表示する（デバッグ用） '''
         for _no, edas in enumerate(list(cls.__edata)):
@@ -274,6 +301,11 @@ class Edas():
     def _str_state(cls, state):
         ''' 指定タスクの状態を文字列で返す（デバッグ用） '''
         return cls._state_list[min(state, len(cls._state_list))]
+
+    @classmethod
+    def _str_nature(cls, nature):
+        ''' 指定タスクの性質を文字列で返す（デバッグ用） '''
+        return cls._nature_list[nature]
 
     @classmethod
     def _get_taskcount(cls, nature = None):
@@ -300,10 +332,12 @@ class Edas():
         if cls.__tracelevel >= level:
             if myself:
                 _strstate = f" [{cls._str_state(myself._state)}]"
+                _strnature = f" <{cls._str_nature(myself._task_nature)}>"
                 if previus_state:
                     _strstate = f" [{cls._str_state(previus_state)}]->" + _strstate
 
-                print(f"{message}"   + f" name={myself.name} ({myself.type})" + _strstate + aftermessage)
+                print(f"{message}"   + f" name={myself.name} ({myself.type})" +
+                      _strnature +  _strstate + aftermessage)
 
                 for yourself in myself._follows:
                     print("        + " +
@@ -339,10 +373,12 @@ class Edas():
 
     def cancel(self, sync=True):
         ''' タスクを終了する '''
+        print(f"{sync=}, {self._terminate_by_sync=}")
         _sync = sync and self._terminate_by_sync
         if self in Edas.__edata:
             _pstate = self._state
             if self._state in [Edas.EXEC, Edas.S_PAUSE, Edas.S_END]:
+                print(f"{_sync=}")
                 self._state = Edas.S_END if _sync else Edas.END
                 Edas.__traceprint(11, "--> cancel  ", self, previus_state=_pstate)
             elif self._state in [Edas.START, Edas.PAUSE]:

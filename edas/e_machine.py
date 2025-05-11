@@ -66,6 +66,15 @@ class Eloop():
         ''' 通常のタスク（task_nature=BASIC）が動作していない時間を返す '''
         return Edas.idle_time()
 
+    @staticmethod
+    def cancel_basic_tasks(sync=True):
+        ''' 動作中の全ての通常タスク（task_nature=BASIC）を終了する '''
+        Edas.cancel_basic_tasks(sync=sync)
+
+    @staticmethod
+    def wait_for_idle(timeout=1.0):
+        ''' 動作中の全ての通常タスク（task_nature=BASIC）の終了を待つ '''
+        Edas.wait_for_idle(timeout=timeout)
 
 
 # -------------------------- Button class  below ---------------------------------------------
@@ -479,7 +488,7 @@ class LED(Signal):
     def stop_background_and_execute(self, func, sync=True):
         ''' blink などのバックグラウンド処理を停止した後 func を実行する '''
         if self._background:
-            ret = Edas(Edas.y_oneshot(func), previous_task=self._background)
+            ret = Edas(Edas.y_oneshot(func), previous_task=self._background, task_nature=Edas.FLASH)
             self._background.cancel(sync)
         else:
             ret = func()
@@ -496,7 +505,7 @@ class LED(Signal):
 
     def on(self, within=None):
         ''' LEDを点灯する '''
-        self.stop_background_and_execute(super().on)
+        self.stop_background_and_execute(super().on, sync=False)
 
     def on_for(self, seconds=0.5):
         ''' LEDを点灯し、seconds秒後に消灯する '''
@@ -506,7 +515,7 @@ class LED(Signal):
 
     def off(self):
         ''' LEDを消灯する '''
-        self.stop_background_and_execute(super().off)
+        self.stop_background_and_execute(super().off, sync=False)
 
     def toggle(self):
         ''' LEDの点灯と消灯を切り替える '''
@@ -578,7 +587,7 @@ class PWMLED(PWM):
     def stop_background_and_execute(self, func, sync=True):
         ''' blinkや fadeinなどのバックグラウンド処理を停止した後 func を実行する '''
         if self._background:
-            ret = Edas(Edas.y_oneshot(func), previous_task=self._background)
+            ret = Edas(Edas.y_oneshot(func), previous_task=self._background, task_nature=Edas.FLASH)
             self._background.cancel(sync)
         else:
             ret = func()
@@ -634,11 +643,11 @@ class PWMLED(PWM):
 
     def on(self):
         ''' PWMLEDをフル点灯する（duty比を最高値にする） '''
-        self.stop_background_and_execute(Mu(self.duty, self.hi))
+        self.stop_background_and_execute(Mu(self.duty, self.hi), sync=False)
 
     def off(self):
         ''' PWMLEDを消灯する（duty比を最低値にする） '''
-        self.stop_background_and_execute(Mu(self.duty, self.lo))
+        self.stop_background_and_execute(Mu(self.duty, self.lo), sync=False)
 
     def y_blink(self, on_time, off_time, fade_in_time, fade_out_time, n):
         # print(f"{on_time=}, {off_time=}, {fade_in_time=}, {fade_out_time=}, {n=}")
