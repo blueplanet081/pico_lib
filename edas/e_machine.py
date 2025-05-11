@@ -488,20 +488,10 @@ class LED(Signal):
     def stop_background_and_execute(self, func, sync=True):
         ''' blink などのバックグラウンド処理を停止した後 func を実行する '''
         if self._background:
-            ret = Edas(Edas.y_oneshot(func), previous_task=self._background, task_nature=Edas.FLASH)
+            Edas(Edas.y_oneshot(func), previous_task=self._background, task_nature=Edas.FLASH)
             self._background.cancel(sync)
         else:
-            ret = func()
-        return ret
-
-    # def _after_background(self, func, sync=False):
-    #     ''' blink などのバックグラウンド処理を停止した後 func を実行する '''
-    #     if self._background:
-    #         ret = Edas(Edas.y_oneshot(func), previous_task=self._background)
-    #         self._background.stop(sync)
-    #     else:
-    #         ret = func()
-    #     return ret
+            func()
 
     def on(self, within=None):
         ''' LEDを点灯する '''
