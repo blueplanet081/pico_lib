@@ -44,13 +44,13 @@ class Edas():
     CORE = const(0)         # システム制御用
     PERSISTENT = const(1)   # 継続的なタスク
     BASIC = const(2)        # 通常タスク
-    VOLATILE = const(3)     # いつ終了させても問題ないタスク
-    FLASH = const(4)
+    FLASH = const(3)        # 瞬間タスク（1turnで終了するタスク）
+    VOLATILE = const(4)     # いつ終了させても問題ないタスク
     UNKNOWN = const(5)      # 管理対象外
     # タスクの性質のセット
-    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, VOLATILE, FLASH}
+    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, FLASH, VOLATILE}
 
-    _nature_list = ["CORE", "PERSISTENT", "BASIC", "VOLATILE", "FLASH", "UNKNOWN"]
+    _nature_list = ["CORE", "PERSISTENT", "BASIC", "FLASH", "VOLATILE", "UNKNOWN"]
 
     # タスクのセッション実行結果
     SYNC = const(22)    # SYNCポイントに達した
@@ -208,8 +208,8 @@ class Edas():
                 else:                           # S_PAUSE、S_END 以外は何もしない
                     cls.__traceprint(18, "   > SYNC ", edas)
 
-        # タスクアイドルタイム（nature=BASIC のタスクが動いていない時間）を計算
-        if cls.__task_count[cls.BASIC]:     # タスクが実行されている
+        # タスクアイドルタイム（nature=BASIC または FLASH のタスクが動いていない時間）を計算
+        if cls.__task_count[cls.BASIC] or cls.__task_count[cls.FLASH]:     # タスクが実行されている
             cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
             cls.__taskidle_time_ms = 0
             cls.__task_is_idle = False
@@ -218,7 +218,7 @@ class Edas():
             cls.__task_is_idle = True
 
         _timespent = time.ticks_diff(time.ticks_ms(), cls.__entpoint)
-        cls.__traceprint(22, f"  +   -- taskcount={cls.__task_count}")
+        cls.__traceprint(22, f"  +   -- {cls.__task_count=}, {cls.__taskidle_time_ms=}")
         cls.__traceprint(28, f"  +   -- timespent={_timespent}")
         _period = max(cls.__interval - _timespent, cls.__interval_min)
         # if cls.__heartbeatON:
@@ -268,16 +268,14 @@ class Edas():
                 edas.cancel(sync=sync)
 
     @classmethod
-    def wait_for_idle(cls, timeout=1.0):
+    def wait_for_idle(cls, timeout=None):
         ''' 動作中の全ての通常タスク（task_nature=BASIC）の終了を待つ '''
-        _wtimeout = int(timeout * 1000)
-        _spoint = time.ticks_ms()
-        while(time.ticks_diff(time.ticks_ms(), _spoint) < _wtimeout):
+        if timeout:
+            _wtimeout = int(timeout * 1000)
+            _spoint = time.ticks_ms()
+        while(not timeout or time.ticks_diff(time.ticks_ms(), _spoint) < _wtimeout):
             if cls.__task_is_idle:
-                # print("end")
                 break
-        # else:
-        #     print("timeout")
 
     @classmethod
     def show_edas(cls):
@@ -373,12 +371,10 @@ class Edas():
 
     def cancel(self, sync=True):
         ''' タスクを終了する '''
-        print(f"{sync=}, {self._terminate_by_sync=}")
         _sync = sync and self._terminate_by_sync
         if self in Edas.__edata:
             _pstate = self._state
             if self._state in [Edas.EXEC, Edas.S_PAUSE, Edas.S_END]:
-                print(f"{_sync=}")
                 self._state = Edas.S_END if _sync else Edas.END
                 Edas.__traceprint(11, "--> cancel  ", self, previus_state=_pstate)
             elif self._state in [Edas.START, Edas.PAUSE]:
