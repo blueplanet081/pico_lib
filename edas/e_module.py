@@ -80,11 +80,7 @@ class Edas():
     __freezed = False           # handler凍結中かどうか
     __freezetime = 2            # 一回のfreeze時間(ms)
 
-    # __heartbeat = Bootsel_button()
-    # __heartbeatON = None
-    # __heartbeatOFF = None
-
-    def __init__(self, gen, name=None, previous_task=None, pause=False,
+    def __init__(self, gen, name=None, ps=None, previous_task=None, pause=False,
                  terminate_by_sync=False, task_nature=BASIC):
 
         assert is_generator(gen), "<gen> must be generator"
@@ -97,11 +93,18 @@ class Edas():
         self.name = _name           # タスクの名前
         self.type = _type           # タスクのタイプ（コルーチン名）
         self._terminate_by_sync = terminate_by_sync     # 'SYNC' で終了するかどうか
+        
+        assert ps is None or callable(ps), "Argument 'ps' must be callable"
+        self._ps = ps               # タスク終了後に動く関数
+
         self._follows = []          # 後続のタスクリスト
         self._task_nature = task_nature \
                             if task_nature in Edas.TASK_NATURE_SET \
                             else Edas.UNKNOWN       # タスクの性質
 
+        self._start_point = 0       # 開始時刻
+        self._end_point = 0         # 終了時刻
+        self._canceled = False      # cancelされたかどうか
         self._result = None         # タスクの実行結果
 
         if not previous_task:   # 先行タスク指定なし（単独タスク）
@@ -122,6 +125,9 @@ class Edas():
                 self._state = Edas.START         # 即実行（STARTとして登録）
                 Edas.__traceprint(11, "--> init ", self)
                 Edas.__traceprint(11, "('followto' is not exist!!) ")
+
+        if self._state == Edas.START:
+            Edas.__task_is_idle = False
 
         Edas.__edata.append(self)   # タスクリストに登録
 
@@ -166,6 +172,9 @@ class Edas():
                 cls.__traceprint(14, "      >>> ", edas, previus_state=cls.START)
 
             elif edas._state == cls.END:    # 終了タスク
+                if edas._ps:
+                    print("Execute PS")
+                    edas._ps()
                 cls._set_follows(edas)          # 後続タスクを「実行中」に変更
                 cls.__edata.remove(edas)        # END -> タスクリストから削除
                 edas._state = cls.DONE          
@@ -175,9 +184,6 @@ class Edas():
                     cls.__traceprint(14, f"     {edas._result=}")
 
         # 実行処理
-        # if cls.__heartbeatON:
-        #     cls.__heartbeatON.on()
-
         # 実行中のタスクのカウント（性質別）をクリアしている
         cls.__task_count[:] = [0] * (len(cls.TASK_NATURE_SET) + 1)
 
@@ -221,8 +227,7 @@ class Edas():
         cls.__traceprint(22, f"  +   -- {cls.__task_count=}, {cls.__taskidle_time_ms=}")
         cls.__traceprint(28, f"  +   -- timespent={_timespent}")
         _period = max(cls.__interval - _timespent, cls.__interval_min)
-        # if cls.__heartbeatON:
-        #     cls.__heartbeatON.off()
+
         if cls.__is_loop_active:
             timer.init(mode=Timer.ONE_SHOT, period=_period, callback=cls._handler)
         return
@@ -243,8 +248,6 @@ class Edas():
     @classmethod
     def loop_start(cls, loop_interval=None, tracelevel=0):
         ''' イベントループを開始する '''
-        # cls.__heartbeatON = LED("LED")
-
         if tracelevel is not None:
             cls.__tracelevel = tracelevel
         if loop_interval is not None:
@@ -413,14 +416,15 @@ class Edas():
         return
         yield "dummy for oneshot generator"
 
-    # @staticmethod
-    # def y_wait_while(wait_ms):
-    #     ''' wait_ms 時間が経過するまで yieldを繰り返す。<br>
-    #         yield from Edas.wait_while(wait_ms) で呼び出すこと。
-    #     '''
-    #     _now = Edas.ticks_ms()
-    #     while time.ticks_diff(Edas.ticks_ms(), _now) < wait_ms:
-    #         yield
+    @staticmethod
+    def y_sleep(second):
+        ''' wait_ms 時間が経過するまで yieldを繰り返す。<br>
+            yield from Edas.y_sleep(second) で呼び出すこと。
+        '''
+        _wait_ms = int(second * 1000)
+        _now = Edas.ticks_ms()
+        while time.ticks_diff(Edas.ticks_ms(), _now) < _wait_ms:
+            yield
 
 
 class CheckTime():
