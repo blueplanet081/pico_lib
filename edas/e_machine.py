@@ -44,23 +44,25 @@ class Eloop():
         Edas.loop_stop()
 
     @staticmethod
-    def create_task(gen, name=None, on_cancel=None, previous_task=None, pause=False, terminate_by_sync=False):
+    def create_task(gen, name=None, previous_task=None, pause=False, on_cancel=None,
+                    terminate_by_sync=False, task_nature=Edas.BASIC):
         ''' 新しいタスクを生成し、イベントループに登録する
 
             args:
                 gen: generator（タスクとして動作するジェネレータオブジェクト）
                 name: str（タスクにつける名前）
-                on_cancel: callable（タスクがキャンセルされた時に実行する処理）
                 previous_task: <edas>（先行タスク）
-                start: bool（登録後すぐ実行するかどうか）
-                terminate_by_sync（'SYNC' で終了するかどうか）
+                pause: bool（登録後すぐ実行するかどうか）
+                on_cancel: callable（タスクがキャンセルされた時に実行する処理）
+                terminate_by_sync: bool（'SYNC' で終了するかどうか）
+                task_nature: int（タスクの性質）
             return:
                 <edas> Edasタスクオブジェクト
         '''
 
 
         return Edas(gen, name=name, previous_task=previous_task, pause=pause, on_cancel=on_cancel,
-                    terminate_by_sync=terminate_by_sync)
+                    terminate_by_sync=terminate_by_sync, task_nature=task_nature)
 
     @staticmethod
     def idle_time():
@@ -77,6 +79,15 @@ class Eloop():
         ''' 動作中の全ての通常タスク（task_nature=BASIC）の終了を待つ '''
         Edas.wait_for_idle(timeout=timeout)
 
+    @staticmethod
+    def y_sleep(second):
+        ''' second秒が経過するまで yieldを繰り返すタスクジェネレータ<br>
+            yield from Edas.y_sleep(second) で呼び出すこと。
+        '''
+        _wait_ms = int(second * 1000)
+        _now = Edas.ticks_ms()
+        while time.ticks_diff(Edas.ticks_ms(), _now) < _wait_ms:
+            yield
 
 # -------------------------- Button class  below ---------------------------------------------
 class KeyList():
