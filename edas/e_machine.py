@@ -1,6 +1,6 @@
 __doc__ = \
 '''-- Edas module for MycroPython'''
-''' CheckTimeの y_wait に update指定を追加 '''
+''' CheckTimeの y_wait_ms に update指定を追加 '''
 __version__ = "0.09.04"
 import time
 from micropython import const
@@ -44,12 +44,13 @@ class Eloop():
         Edas.loop_stop()
 
     @staticmethod
-    def create_task(gen, name=None, previous_task=None, pause=False, terminate_by_sync=False):
+    def create_task(gen, name=None, on_cancel=None, previous_task=None, pause=False, terminate_by_sync=False):
         ''' 新しいタスクを生成し、イベントループに登録する
 
             args:
                 gen: generator（タスクとして動作するジェネレータオブジェクト）
                 name: str（タスクにつける名前）
+                on_cancel: callable（タスクがキャンセルされた時に実行する処理）
                 previous_task: <edas>（先行タスク）
                 start: bool（登録後すぐ実行するかどうか）
                 terminate_by_sync（'SYNC' で終了するかどうか）
@@ -58,7 +59,7 @@ class Eloop():
         '''
 
 
-        return Edas(gen, name=name, previous_task=previous_task, pause=pause,
+        return Edas(gen, name=name, previous_task=previous_task, pause=pause, on_cancel=on_cancel,
                     terminate_by_sync=terminate_by_sync)
 
     @staticmethod
@@ -72,7 +73,7 @@ class Eloop():
         Edas.cancel_basic_tasks(sync=sync)
 
     @staticmethod
-    def wait_for_idle(timeout=1.0):
+    def wait_for_idle(timeout=None):
         ''' 動作中の全ての通常タスク（task_nature=BASIC）の終了を待つ '''
         Edas.wait_for_idle(timeout=timeout)
 
@@ -482,14 +483,14 @@ class LED(Signal):
     def stop_background(self, sync=True):
         ''' blink などのバックグラウンド処理を停止する '''
         if self._background:
-            self._background.cancel(sync)
+            self._background.cancel(sync=False)
             self._background = None
 
     def stop_background_and_execute(self, func, sync=True):
         ''' blink などのバックグラウンド処理を停止した後 func を実行する '''
         if self._background:
             Edas(Edas.y_oneshot(func), previous_task=self._background, task_nature=Edas.FLASH)
-            self._background.cancel(sync)
+            self._background.cancel(sync=False)
         else:
             func()
 
@@ -522,10 +523,10 @@ class LED(Signal):
         # print(f"y_blink {_on_time=} {_off_time=} {_interval=}")
         while not n or _count < n:
             self.value(1)
-            yield from _ctime.y_wait(_on_time, update=True)
+            yield from _ctime.y_wait_ms(_on_time, update=True)
             self.value(0)
             # yield from _ctime.y_wait(_interval)
-            yield from _ctime.y_wait(_off_time, update=True)
+            yield from _ctime.y_wait_ms(_off_time, update=True)
             yield Edas.SYNC
             _count += 1
             # _ctime.add_ms(_interval)
@@ -535,7 +536,7 @@ class LED(Signal):
         if self._background:
             self._background.cancel()
         self._background = Edas(self.y_blink(on_time, off_time, n), previous_task=followto,
-                                terminate_by_sync=True)
+                                terminate_by_sync=True, on_cancel=self.off)
         return self._background
 
     def flicker(self, interval=1.0, duty=0.5, n=None, followto=None):
@@ -555,7 +556,7 @@ class PWMLED(PWM):
         if type(pin) is int:        # 番号で指定された
             self._pin = Pin(pin, Pin.OUT, value=0)
         elif type(pin) is LED:      # LED()で指定された
-            self._pin = pin._pin
+            self._pin = pin
         else:                       # それ以外（多分 Pin）
             self._pin = pin
 
@@ -651,9 +652,9 @@ class PWMLED(PWM):
         _count = 0
         while not n or _count < n:
             yield from self.y_fade(fade_in_time, self.lo, self.hi)
-            yield from _ctime.y_wait(_point1)
+            yield from _ctime.y_wait_ms(_point1)
             yield from self.y_fade(fade_out_time, self.hi, self.lo)
-            yield from _ctime.y_wait(_point2)
+            yield from _ctime.y_wait_ms(_point2)
             yield Edas.SYNC
             _ctime.add_ms(_point2)
             _count += 1
@@ -696,9 +697,9 @@ if __name__ == '__main__':
         _count = 0
         while not n or _count < n:
             led.on()
-            yield from _ctime.y_wait(ontime, update=True)
+            yield from _ctime.y_wait_ms(ontime, update=True)
             led.off()
-            yield from _ctime.y_wait(offtime, update=True)
+            yield from _ctime.y_wait_ms(offtime, update=True)
             yield Edas.SYNC
             _count += 1
         return "**OWARIDAYO**"
