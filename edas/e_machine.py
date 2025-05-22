@@ -29,14 +29,15 @@ class Eloop():
         pass
 
     @staticmethod
-    def start(loop_interval: int|None=None, tracelevel: int=0):
+    def start(loop_interval: int|None=None, tracelevel: int=0, id=0):
         ''' Edasのイベントループを開始する
 
             args:
                 loop_interval: int（イベントループの間隔 msec）
                 tracelevel: int（トレース情報出力レベル）
+                id: int（タイマーID -1、0 ～ 7）
         '''
-        Edas.loop_start(loop_interval, tracelevel)
+        Edas.loop_start(loop_interval, tracelevel, id=id)
 
     @staticmethod
     def stop():
@@ -557,7 +558,7 @@ class LED(Signal):
         if self._background:
             self._background.cancel()
         self._background = Edas(self.y_blink(_on_time, _off_time, n), previous_task=followto,
-                                terminate_by_sync=True)
+                                terminate_by_sync=True, on_cancel=self.off)
         return self._background
 
 
@@ -580,13 +581,13 @@ class PWMLED(PWM):
 
         self.value(value)
 
-    def stop_background(self, sync=True):
+    def stop_background(self, sync=False):
         ''' blinkや fadeinなどのバックグラウンド処理を停止する '''
         if self._background:
             self._background.cancel(sync)
             self._background = None
 
-    def stop_background_and_execute(self, func, sync=True):
+    def stop_background_and_execute(self, func, sync=False):
         ''' blinkや fadeinなどのバックグラウンド処理を停止した後 func を実行する '''
         if self._background:
             ret = Edas(Edas.y_oneshot(func), previous_task=self._background, task_nature=Edas.FLASH)
@@ -675,7 +676,7 @@ class PWMLED(PWM):
         if self._background:
             self._background.cancel()
         self._background = Edas(self.y_blink(on_time, off_time, fade_in_time, fade_out_time, n),
-                                name="blink")
+                                name="blink", terminate_by_sync=True, on_cancel=self.off)
         return self._background
 
     def y_pulse(self, fade_in_time, fade_out_time, n):
@@ -691,7 +692,7 @@ class PWMLED(PWM):
         if self._background:
             self._background.cancel()
         self._background = Edas(self.y_pulse(fade_in_time, fade_out_time, n), name="pulse",
-                                terminate_by_sync=True)
+                                terminate_by_sync=True, on_cancel=self.off)
         return self._background
 
     def _toggle(self):
@@ -707,10 +708,13 @@ if __name__ == '__main__':
         _ctime = CheckTime()
         _count = 0
         while not n or _count < n:
+            print(f"ON at  {time.ticks_ms()}")
             led.on()
             yield from _ctime.y_wait_ms(ontime, update=True)
+            print(f"Off at {time.ticks_ms()}")
             led.off()
             yield from _ctime.y_wait_ms(offtime, update=True)
+            print(f"end at {time.ticks_ms()}")
             yield Edas.SYNC
             _count += 1
         return "**OWARIDAYO**"
@@ -724,7 +728,7 @@ if __name__ == '__main__':
     task1 = Eloop.create_task(blink(led1, 1000, 1000, 5), terminate_by_sync=True)
     task2 = Eloop.create_task(blink(led2, 1000, 1000, 5), previous_task=task1, terminate_by_sync=True)
     # Eloop.start()
-    Eloop.start(tracelevel=18, loop_interval=10)
+    Eloop.start(tracelevel=22, loop_interval=100, id=0)
     bloop = Button.start(pull_up=True, tracelevel=12, period=100)
 
     led_0 = LED("LED")
@@ -734,8 +738,8 @@ if __name__ == '__main__':
                     )
 
     for i in range(1000):
-        with Eloop.Suspender():
-            print(f"---- round {i} ----")
+        # with Eloop.Suspender():
+        print(f"---- round {i} ----")
         print(f"{Button.idle_time()=}")
         print(f"{Edas._get_taskcount()=}")
         print(f"{Edas._get_taskcount(Edas.BASIC)=}")
