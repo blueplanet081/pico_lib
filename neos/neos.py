@@ -17,6 +17,7 @@ def makedict_from_kv_tuple(data):
 
 def help():
     print("show_memory_info() : Display memory usage.")
+    print("show_frequency() : Display the operating frequency.")
     print("show_version() : Display the MicroPython interpreter version.")
     print("show_implementation() : Display MicroPython implementation details.")
     print("show_uname() : Display basic system and device information.")
@@ -41,6 +42,12 @@ def show_memory_info():
     print(f"  total:  {total:8,} bytes")
     print(f"  use:    {use:8,} bytes  ({use/total*100:.2}%)")
     print(f"  remain: {remain:8,} bytes")
+
+def show_frequency():
+    ''' 動作周波数を表示 '''
+
+    print(f"{machine.freq()=} ({machine.freq():,}Hz)")
+
 
 def show_version():
     ''' MicroPythonのバージョン情報を表示 '''
