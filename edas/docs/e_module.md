@@ -405,7 +405,7 @@ sync=True を指定した場合、同期ポイントを持つタスクは同期�
 | 11         | フリーズ処理             | with Edas.Freezed()処理時 |
 | 14         | タスクの状態             | タスクの状態変更時        |
 | 15         | SYNC終了                 | タスクのSYNC終了検出時    |
-| 18         | SUNC検出                 | タスクのSYNC検出時        |
+| 18         | SYNC検出                 | タスクのSYNC検出時        |
 | 22         | turnタスク実行処理開始   | turn                      |
 | 24         | turn整列処理開始         | turn                      |
 | 28         | turn開始時間、終了時間等 | turn                      |
@@ -442,7 +442,7 @@ sync=True を指定した場合、同期ポイントを持つタスクは同期�
 | CORE       | const(0)   | システム制御用（reserved）          |
 | PERSISTENT | const(1)   | 継続的なタスク                      |
 | BASIC      | const(2)   | 通常タスク                          |
-| VOLATILE   | const(3)   | いつ終了させても問題ないタスク      |
+| ANCILLARY  | const(3)   | いつ終了させても問題ないタスク      |
 | FLASH      | const(4)   | 瞬間タスク（1turnで終了するタスク） |
 | UNKNOWN    | const(5)   | 管理対象外                          |
 

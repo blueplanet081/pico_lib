@@ -94,12 +94,12 @@ class Edas():
     PERSISTENT = const(1)   # 継続的なタスク
     BASIC = const(2)        # 通常タスク
     FLASH = const(3)        # 瞬間タスク（1turnで終了するタスク）
-    VOLATILE = const(4)     # いつ終了させても問題ないタスク
+    ANCILLARY = const(4)    # いつ終了させても問題ないタスク
     UNKNOWN = const(5)      # 管理対象外
     # タスクの性質のセット
-    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, FLASH, VOLATILE}
+    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, FLASH, ANCILLARY}
 
-    _nature_list = ["CORE", "PERSISTENT", "BASIC", "FLASH", "VOLATILE", "UNKNOWN"]
+    _nature_list = ["CORE", "PERSISTENT", "BASIC", "FLASH", "ANCILLARY", "UNKNOWN"]
 
     # タスクのセッション実行結果
     SYNC = const(22)    # SYNCポイントに達した
@@ -133,7 +133,7 @@ class Edas():
     __freezetime = 2            # 一回のfreeze時間(ms)
 
     def __init__(self, gen, name=None, previous_task=None, pause=False, on_cancel=None,
-                 terminate_by_sync=False, task_nature=BASIC):
+                 terminate_by_sync=False, task_nature=BASIC, volatile=True):
 
         assert is_generator(gen), "<gen> must be generator"
 
@@ -155,6 +155,7 @@ class Edas():
         self._task_nature = task_nature \
                             if task_nature in Edas.TASK_NATURE_SET \
                             else Edas.UNKNOWN       # タスクの性質
+        self._volatile = volatile   # タスク終了後に削除されるかどうか
 
         self._start_point = 0       # 開始時刻
         self._end_point = 0         # 終了時刻
@@ -231,12 +232,15 @@ class Edas():
                     edas._on_cancel()
                 cls._set_follows(edas)          # 後続タスクを「実行中」に変更
                 cls.__edata.remove(edas)        # END -> タスクリストから削除
-                edas._state = cls.DONE          
-                cls.__traceprint(14, "      >>> ", edas, aftermessage="  deleted")
-                cls.__tdata.append(edas)
-                if edas._result:
+                edas._state = cls.DONE
+                print(f"{edas._result=}, {edas._volatile=}")
+                if edas._result or not edas._volatile:
                     cls.__tdata.append(edas)
+                    cls.__traceprint(14, "      >>> ", edas)
                     cls.__traceprint(14, f"     {edas._result=}")
+                else:
+                    cls.__traceprint(14, "      >>> ", edas, aftermessage="  deleted")
+                    del edas
 
         # 実行処理
         # 実行中のタスクのカウント（性質別）をクリアしている
@@ -251,7 +255,7 @@ class Edas():
             try:
                 _ret = next(edas._gen)      # ジェネレータ・オブジェクトを 1ステップ実行
             except StopIteration as e:       # ジェネレータ・オブジェクトが終了
-                edas._result = e
+                edas._result = e.value
                 _ret = cls.IEND
 
             _pstate = edas._state
@@ -354,6 +358,12 @@ class Edas():
             cls.__traceprint(0, f"{_no}: ", edas)
 
     @classmethod
+    def show_done(cls):
+        ''' 終了したタスクの一覧を表示する（デバッグ用） '''
+        for _no, edas in enumerate(list(cls.__tdata)):
+            cls.__traceprint(0, f"{_no}: ", edas)
+
+    @classmethod
     def stop_edas(cls, name=None, sync=False):
         ''' タスクを停止する（デバッグ用） '''
         for edas in list(cls.__edata):
@@ -418,9 +428,10 @@ class Edas():
     def resume(self):
         ''' タスクを開始/再開する '''
         if self in Edas.__edata:
-            if self._state == Edas.PAUSE:
+            _pstate = self._state
+            if self._state in [Edas.PAUSE, Edas.S_PAUSE]:
                 self._state = Edas.START
-                Edas.__traceprint(11, "--> resume ", self, previus_state=Edas.PAUSE)
+                Edas.__traceprint(11, "--> resume ", self, previus_state=_pstate)
             else:
                 Edas.__traceprint(8, "--> can't resume** ", self)
         else:
@@ -465,7 +476,10 @@ class Edas():
     def result(self):
         ''' タスクの終了結果を返す '''
         if self in Edas.__tdata:
-            return self._result
+            ret = self._result
+            if self._volatile:
+                Edas.__tdata.remove(self)
+            return ret
         else:
             return None
 
@@ -546,4 +560,53 @@ class CheckTime():
     #         return True
     #     return False
 
+if __name__ == '__main__':
+    from machine import Pin
+
+    def blink(led, ontime, offtime, n):
+        _ctime = CheckTime()
+        _count = 0
+        while not n or _count < n:
+            # print(f"ON at  {time.ticks_ms()}")
+            led.on()
+            yield from _ctime.y_wait_ms(ontime, update=True)
+            # print(f"Off at {time.ticks_ms()}")
+            led.off()
+            yield from _ctime.y_wait_ms(offtime, update=True)
+            # print(f"end at {time.ticks_ms()}")
+            yield Edas.SYNC
+            _count += 1
+        return "**OWARIDAYO**"
+
+
+    print(__doc__)
+    print(f"version = {__version__}")
+
+    led1 = Pin(16, Pin.OUT)
+    led2 = Pin(17, Pin.OUT)
+    task1 = Edas(blink(led1, 1000, 500, 5), terminate_by_sync=True, volatile=False)
+    task2 = Edas(blink(led2, 800, 500, 5), previous_task=task1, terminate_by_sync=True)
+    # Eloop.start()
+    Edas.loop_start(tracelevel=14, loop_interval=100, id=0)
+
+    for i in range(1000):
+        # with Eloop.Suspender():
+        print(f"---- round {i} ----")
+        # print(f"{Edas._get_taskcount()=}")
+        # print(f"{Edas._get_taskcount(Edas.BASIC)=}")
+        print(f"{Edas.idle_time()=}")
+
+        if Edas.idle_time() > 5.0:
+            break
+        time.sleep_ms(3000)
+
+    Edas.show_done()
+    print(f"{task1.done()=}")
+    print(f"{task1.result()=}")
+    Edas.show_done()
+    print(f"{task2.done()=}")
+    print(f"{task2.result()=}")
+    Edas.show_done()
+    print(f"{task1.result()=}")
+    print(f"{task2.result()=}")
 
