@@ -17,7 +17,6 @@ class MyTimer():
         wrap()
 
     def __init__(self, id=0) -> None:
-        print("MyTimer start !!!")
         self._id = id
         self._callback = None
         self._period = 0
@@ -38,18 +37,6 @@ class MyTimer():
             if self._callback:
                 self._callback(self)
         self._counter -= 1
-
-    def init(self, mode=PERIODIC, period=10, callback=None):
-        ''' タイマーを初期化する '''
-        assert callable(callback), "callback must be a callable object."
-        self._callback = callback
-
-        self._mode = mode
-        self._period = period
-        self._counter = self._period
-
-        self.sm.active(1)  # ステートマシンを有効化
-
 
     def init(self, mode=PERIODIC, period=10, callback=None):
         ''' タイマーを初期化する '''
