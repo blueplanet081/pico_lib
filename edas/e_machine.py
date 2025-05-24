@@ -46,7 +46,7 @@ class Eloop():
 
     @staticmethod
     def create_task(gen, name=None, previous_task=None, pause=False, on_cancel=None,
-                    terminate_by_sync=False, task_nature=Edas.BASIC):
+                    terminate_by_sync=False, task_nature=Edas.BASIC, volatile=True):
         ''' 新しいタスクを生成し、イベントループに登録する
 
             args:
@@ -57,13 +57,14 @@ class Eloop():
                 on_cancel: callable（タスクがキャンセルされた時に実行する処理）
                 terminate_by_sync: bool（'SYNC' で終了するかどうか）
                 task_nature: int（タスクの性質）
+                volatile: bool（タスク終了時に消去されるかどうか）
             return:
                 <edas> Edasタスクオブジェクト
         '''
 
 
         return Edas(gen, name=name, previous_task=previous_task, pause=pause, on_cancel=on_cancel,
-                    terminate_by_sync=terminate_by_sync, task_nature=task_nature)
+                    terminate_by_sync=terminate_by_sync, task_nature=task_nature, volatile=volatile)
 
     @staticmethod
     def idle_time():

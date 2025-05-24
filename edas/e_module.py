@@ -9,7 +9,6 @@ import rp2
 
 TypeGenerator = type((lambda: (yield))())
 
-
 def is_generator(obj):
     ''' ジェネレータオブジェクトの判定 '''
     return isinstance(obj, TypeGenerator)
@@ -30,7 +29,6 @@ class MyTimer():
         wrap()
 
     def __init__(self, id=0) -> None:
-        print("MyTimer start !!!")
         self._id = id
         self._callback = None
         self._period = 0
@@ -213,10 +211,9 @@ class Edas():
         if cls.__freezed:
             cls.__traceprint(11, f"==== freezed({cls.__freezetime}) ====")
             timer.init(mode=Timer.ONE_SHOT, period=cls.__freezetime, callback=cls._handler)
-            # timer.init(mode=MyTimer.ONE_SHOT, period=cls.__freezetime, callback=cls._handler)
             return
 
-        # 事前処理
+        # 事前処理 ----------------------------------------------------
         cls.__traceprint(24, "alignment process.....")
         cls.__ticks_ms = time.ticks_ms()
 
@@ -231,18 +228,22 @@ class Edas():
                     print("Execute on_canceled")
                     edas._on_cancel()
                 cls._set_follows(edas)          # 後続タスクを「実行中」に変更
-                cls.__edata.remove(edas)        # END -> タスクリストから削除
+                edas._gen.close()               # ジェネレータ・オブジェクトを停止する
                 edas._state = cls.DONE
-                print(f"{edas._result=}, {edas._volatile=}")
-                if edas._result or not edas._volatile:
-                    cls.__tdata.append(edas)
-                    cls.__traceprint(14, "      >>> ", edas)
-                    cls.__traceprint(14, f"     {edas._result=}")
-                else:
-                    cls.__traceprint(14, "      >>> ", edas, aftermessage="  deleted")
-                    del edas
+                edas._gen = None                # ジェネレータ・オブジェクトの参照を削除
+                edas._follows = []              # 後続タスクのリストを削除
+                cls.__edata.remove(edas)        # END -> タスクリストから削除
 
-        # 実行処理
+                if edas._result or not edas._volatile:
+                    cls.__tdata.append(edas)    # 終了タスクリストへ登録
+                    cls.__traceprint(14, "      >>> ", edas)
+                    cls.__traceprint(14, f"      {edas._result=}")
+                else:                           # delete
+                    cls.__traceprint(14, "      >>> ", edas, aftermessage="  deleted")
+                    pass
+                    # del edas
+
+        # 実行処理 ----------------------------------------------------
         # 実行中のタスクのカウント（性質別）をクリアしている
         cls.__task_count[:] = [0] * (len(cls.TASK_NATURE_SET) + 1)
 
@@ -254,21 +255,21 @@ class Edas():
             cls.__task_count[edas._task_nature] += 1
             try:
                 _ret = next(edas._gen)      # ジェネレータ・オブジェクトを 1ステップ実行
-            except StopIteration as e:       # ジェネレータ・オブジェクトが終了
+            except StopIteration as e:      # ジェネレータ・オブジェクトが終了
                 edas._result = e.value
                 _ret = cls.IEND
 
             _pstate = edas._state
             if _ret == cls.IEND:        # ジェネレータ・オブジェクトの終了を検出
-                edas._state = cls.END        # EXEC、S_PAUSE、S_END -> END
+                edas._state = cls.END       # EXEC、S_PAUSE、S_END -> END
                 cls.__traceprint(14, "   >> END ", edas, previus_state=_pstate)
 
             elif _ret == cls.SYNC:      # SYNCを検出
-                if edas._state == cls.S_PAUSE:   # S_PAUSE -> PAUSE
+                if edas._state == cls.S_PAUSE:  # S_PAUSE -> PAUSE
                     edas._state = cls.PAUSE
                     cls.__traceprint(15, "   > SYNC ", edas, previus_state=_pstate)
                 elif edas._state == cls.S_END:
-                    edas._state = cls.END        # S_END -> END
+                    edas._state = cls.END       # S_END -> END
                     cls.__traceprint(15, "   > SYNC ", edas, previus_state=_pstate)
                 else:                           # S_PAUSE、S_END 以外は何もしない
                     cls.__traceprint(18, "   > SYNC ", edas)
@@ -288,10 +289,7 @@ class Edas():
         _period = max(cls.__interval - _timespent, cls.__interval_min)
 
         if cls.__is_loop_active:
-            # print("Call Timer!!!!")
-            # cls.__timer.init(mode=MyTimer.ONE_SHOT, period=_period, callback=cls._handler)
             timer.init(mode=Timer.ONE_SHOT, period=_period, callback=cls._handler)
-            # timer.init(mode=MyTimer.ONE_SHOT, period=_period, callback=cls._handler)
         return
 
     @classmethod
@@ -319,14 +317,13 @@ class Edas():
             cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
 
             cls.TIMER_ID = id
-            print(f"Edas.loop_start {cls.TIMER_ID=}")
+            cls.__traceprint(11, f"Edas.loop_start {cls.TIMER_ID=}")
             if cls.TIMER_ID == -1:
                 cls.__timer = Timer(cls.TIMER_ID)       # タイマーモジュール（仮想）
             else:
                 cls.__timer = MyTimer(cls.TIMER_ID)     # タイマーモジュール（StateMachine）
 
             cls.__timer.init(mode=Timer.ONE_SHOT, period=cls.__interval, callback=cls._handler)
-            # cls.__timer.init(mode=MyTimer.ONE_SHOT, period=cls.__interval, callback=cls._handler)
 
     @classmethod
     def loop_stop(cls):
@@ -552,7 +549,6 @@ class CheckTime():
         if update:
             self._ms = time.ticks_add(self._ms, int(wait_ms))
             
-
     # def wait(self, wait_ms) -> bool:
     #     ''' wait_ms 時間が経過するまでTrue、経過したらFalseになる。
     #     '''
@@ -563,35 +559,39 @@ class CheckTime():
 if __name__ == '__main__':
     from machine import Pin
 
-    def blink(led, ontime, offtime, n):
+    def y_blink(led, ontime, offtime, n):
         _ctime = CheckTime()
         _count = 0
-        while not n or _count < n:
-            # print(f"ON at  {time.ticks_ms()}")
-            led.on()
-            yield from _ctime.y_wait_ms(ontime, update=True)
-            # print(f"Off at {time.ticks_ms()}")
+        try:
+            while not n or _count < n:
+                led.on()
+                yield from _ctime.y_wait_ms(ontime, update=True)
+                led.off()
+                yield from _ctime.y_wait_ms(offtime, update=True)
+                yield Edas.SYNC
+                _count += 1
+            return "**OWARIDAYO**"  # 最後まで実行されれば値を返す
+        except GeneratorExit as e:  # 途中で close()された場合
+            pass
+        finally:                    # ジェネレータが終了した
             led.off()
-            yield from _ctime.y_wait_ms(offtime, update=True)
-            # print(f"end at {time.ticks_ms()}")
-            yield Edas.SYNC
-            _count += 1
-        return "**OWARIDAYO**"
 
 
     print(__doc__)
     print(f"version = {__version__}")
+    Edas.loop_start(tracelevel=10, loop_interval=100, id=0)
 
     led1 = Pin(16, Pin.OUT)
     led2 = Pin(17, Pin.OUT)
-    task1 = Edas(blink(led1, 1000, 500, 5), terminate_by_sync=True, volatile=False)
-    task2 = Edas(blink(led2, 800, 500, 5), previous_task=task1, terminate_by_sync=True)
+    task1 = Edas(y_blink(led1, 1000, 200, 5), terminate_by_sync=False, volatile=False)
+    task2 = Edas(y_blink(led2, 800, 500, 5), previous_task=task1, terminate_by_sync=True)
     # Eloop.start()
-    Edas.loop_start(tracelevel=14, loop_interval=100, id=0)
 
     for i in range(1000):
         # with Eloop.Suspender():
         print(f"---- round {i} ----")
+        # if i == 1:
+        #     task1.cancel()
         # print(f"{Edas._get_taskcount()=}")
         # print(f"{Edas._get_taskcount(Edas.BASIC)=}")
         print(f"{Edas.idle_time()=}")
