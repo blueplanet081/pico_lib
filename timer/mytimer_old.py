@@ -3,7 +3,7 @@ import time
 from machine import Timer
 
 class MyTimer():
-    ''' StateMachineからの割り込みを使ったタイマー制御クラス '''
+    ''' StateMachineを使ったタイマー制御クラス '''
     ONE_SHOT = const(0)
     PERIODIC = const(1)
 
@@ -26,19 +26,18 @@ class MyTimer():
 
         # 周波数 100,000Hz なので、１クロックは 0.01msec
         self.sm = rp2.StateMachine(self._id, MyTimer.irq_program, freq=100000)
-        self.sm.irq(self.__intercepter)
+        self.sm.irq(self.intercepter)
 
 
-    def __intercepter(self, sm):
+    def intercepter(self, sm):
         ''' タイマー制御用callback関数 '''
-        _now = time.ticks_ms()
-        if time.ticks_diff(_now, self._spoint) >= self._period:
+        if self._counter <= 0:
+            self._counter = self._period
             if self._mode == MyTimer.ONE_SHOT:
                 self.sm.active(0)   # ステートマシンを無効化
-            else:
-                self._spoint = _now
             if self._callback:
                 self._callback(self)
+        self._counter -= 1
 
     def init(self, mode=PERIODIC, period=10, callback=None):
         ''' タイマーを初期化する '''
@@ -47,7 +46,7 @@ class MyTimer():
 
         self._mode = mode
         self._period = period
-        self._spoint = time.ticks_ms()
+        self._counter = self._period
 
         self.sm.active(1)  # ステートマシンを有効化
 
@@ -77,8 +76,7 @@ if __name__ == '__main__':
 
             # 遅延負荷
             j = 0
-            for i in range(10000):
-                m = time.ticks_diff(time.ticks_ms(), tm)
+            for i in range(40000):
                 j += i
 
             rt = time.ticks_diff(time.ticks_ms(), tm)
@@ -97,7 +95,7 @@ if __name__ == '__main__':
 
             # 遅延負荷
             j = 0
-            for i in range(10000):
+            for i in range(40000):
                 j += i
             # time.sleep_ms(50)
 
@@ -110,7 +108,7 @@ if __name__ == '__main__':
     cb3 = Callbacks(name="cb3")
 
     timer0.init(callback=cb0.callback0, period=1000, mode=MyTimer.ONE_SHOT)
-    timer1.init(callback=cb1.callback1, period=1000, mode=MyTimer.PERIODIC)
+    # timer1.init(callback=cb1.callback1, period=1000, mode=MyTimer.PERIODIC)
     timer3.init(callback=cb3.callback1, period=1000, mode=Timer.PERIODIC)
 
 

@@ -4,6 +4,9 @@
 
 Raspberry Pi Pico W / Pico2 W 上で、machine.Timer() クラスに代わってタイマー制御を行うモジュールです。
 
+- machine.Timer() が他のタイマーと競合するときや、複数のタイマーを使いたいときに使います。
+- StateMachineからの割り込みを使用します。周期の指定にかかわらず 1ミリ秒単位の割り込みを発生させて MicroPython側で時刻調整を行うので、それなりにオーバーヘッドは予想されます。
+
 <br>
 
 ## 対応機種とファームウェアバージョン <!-- omit in toc -->
@@ -32,19 +35,17 @@ Raspberry Pi Pico W / Pico2 W 上で、machine.Timer() クラスに代わって�
 
 ## インストール方法 <!-- omit in toc -->
 
-本モジュールは単独で使用するより、MyTimer() クラスを他のモジュールファイルに組み込んで使うことを想定しています。
+本モジュールは単独で使用するより、MyTimerクラスを他のモジュールファイルに組み込んで使うことを想定しています。
 
 <br>
 
 ## 使用方法 <!-- omit in toc -->
 
-本モジュールから必要なクラスを `import` して使用します。
+本モジュールから MyTimerクラスを `import` して使用します。
 
-    from e_module import Edas, CheckTime
+    from <組み込んだモジュール> import MyTimeer
 
 <br>
-
-[ドキュメント先頭に戻る](#document_top)
 
 <a id="method_list"></a>
 ## メソッド一覧 <!-- omit in toc -->
@@ -91,7 +92,20 @@ machine.Timer() クラスに代わってタイマー制御を行うモジュー�
 | period   | int        | タイマーの期間をミリ秒で指定します。                                                                                           |
 | callback | (callable) | タイマー期間が終了したときに呼び出されるコールバックを指定します。                                                             |
 
-- トレース情報出力レベルは [付録１ トレース情報出力レベル](e_module.md#appendix01)を参照してください。
+- コールバックは１つの引数を取らなければならず、その引数にはタイマーオブジェクトが渡されます。
+
+      # コールバック関数の例
+
+      def callback0(timer):
+          tm = time.ticks_ms()
+          print(f"callback! {tm=}")
+          self.former_tm = tm
+
+          # 何らかの処理
+
+          rt = time.ticks_diff(time.ticks_ms(), tm)
+          timer.init(callback=callback0, period=(period - rt), mode=MyTimer.ONE_SHOT)
+
 <br>
 
 ### 1.3. 　deinit()　タイマーを停止する
