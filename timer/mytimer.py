@@ -56,40 +56,32 @@ class MyTimer():
 
 
 if __name__ == '__main__':
-    # コールバック関数
-    def callback1(timer):
-        tm = time.ticks_ms()
-        print(f"-> PIO triggered callback! {tm=}")
-
     class Callbacks():
         def __init__(self, name="noname", mode=0, period=0):
             self.gcount = 0
-            self.former_tm = 0
+            self.former_tm = time.ticks_ms()
             self.name = name
             self.mode = mode
             self.period = period
 
         def callback0(self, timer):
+            ''' 順次実行形式 '''
             tm = time.ticks_ms()
+            print()
             print(f"{self.gcount} [{self.name}] callback! {tm=} {time.ticks_diff(tm, self.former_tm)}")
             self.gcount += 1
             self.former_tm = tm
 
             # 遅延負荷
             j = 0
-            for i in range(10000):
-                m = time.ticks_diff(time.ticks_ms(), tm)
+            for i in range(40000):
                 j += i
 
             rt = time.ticks_diff(time.ticks_ms(), tm)
-            print(f"{rt=}")
-            # rt = 0
             timer.init(callback=self.callback0, period=(self.period - rt), mode=MyTimer.ONE_SHOT)
 
-
-
-
         def callback1(self, timer):
+            ''' 定期実行形式 '''
             tm = time.ticks_ms()
             print(f"{self.gcount} [{self.name}] callback! {tm=} {time.ticks_diff(tm, self.former_tm)}")
             self.gcount += 1
@@ -97,28 +89,24 @@ if __name__ == '__main__':
 
             # 遅延負荷
             j = 0
-            for i in range(10000):
+            for i in range(40000):
                 j += i
             # time.sleep_ms(50)
 
-    timer0 = MyTimer(0)
-    timer1 = MyTimer(5)
-    timer3 = Timer(-1)
+    timer0 = MyTimer(0)     # MyTimer(0)
+    timer1 = MyTimer(1)     # Mytimer(1)
+    timer = Timer(-1)       # machine.Timer
 
-    cb0 = Callbacks(name="cb0", mode=MyTimer.ONE_SHOT, period=1000)
-    cb1 = Callbacks(name="cb1")
-    cb3 = Callbacks(name="cb3")
+    cb0 = Callbacks(name="cb0", mode=MyTimer.ONE_SHOT, period=1000)     # 順次実行
+    cb1 = Callbacks(name="cb1")     # 定期実行
+    tmr = Callbacks(name="TMR")     # 定期実行（machine.Timer）
 
     timer0.init(callback=cb0.callback0, period=1000, mode=MyTimer.ONE_SHOT)
     timer1.init(callback=cb1.callback1, period=1000, mode=MyTimer.PERIODIC)
-    timer3.init(callback=cb3.callback1, period=1000, mode=Timer.PERIODIC)
+    timer.init(callback=tmr.callback1, period=1000, mode=Timer.PERIODIC)
 
 
     for i in range(5):
         print(f"---- round {i} ----")
         print(f"{time.ticks_ms()=}")
-        time.sleep(20)
-
-    time.sleep(10)
-
-
+        time.sleep(10)
