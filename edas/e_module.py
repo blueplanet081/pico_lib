@@ -14,7 +14,7 @@ def is_generator(obj):
     return isinstance(obj, TypeGenerator)
 
 class MyTimer():
-    ''' StateMachineを使ったタイマー制御クラス '''
+    ''' StateMachineからの割り込みを使ったタイマー制御クラス '''
     ONE_SHOT = const(0)
     PERIODIC = const(1)
 
@@ -37,18 +37,19 @@ class MyTimer():
 
         # 周波数 100,000Hz なので、１クロックは 0.01msec
         self.sm = rp2.StateMachine(self._id, MyTimer.irq_program, freq=100000)
-        self.sm.irq(self.intercepter)
+        self.sm.irq(self.__intercepter)
 
 
-    def intercepter(self, sm):
+    def __intercepter(self, sm):
         ''' タイマー制御用callback関数 '''
-        if self._counter <= 0:
-            self._counter = self._period
+        _now = time.ticks_ms()
+        if time.ticks_diff(_now, self._spoint) >= self._period:
             if self._mode == MyTimer.ONE_SHOT:
                 self.sm.active(0)   # ステートマシンを無効化
+            else:
+                self._spoint = _now
             if self._callback:
                 self._callback(self)
-        self._counter -= 1
 
     def init(self, mode=PERIODIC, period=10, callback=None):
         ''' タイマーを初期化する '''
@@ -57,9 +58,12 @@ class MyTimer():
 
         self._mode = mode
         self._period = period
-        self._counter = self._period
+        self._spoint = time.ticks_ms()
 
         self.sm.active(1)  # ステートマシンを有効化
+
+    def deinit(self):
+        self.sm.active(0)
 
 class Edas():
     ''' 並行処理クラス '''
@@ -91,13 +95,12 @@ class Edas():
     CORE = const(0)         # システム制御用
     PERSISTENT = const(1)   # 継続的なタスク
     BASIC = const(2)        # 通常タスク
-    FLASH = const(3)        # 瞬間タスク（1turnで終了するタスク）
-    ANCILLARY = const(4)    # いつ終了させても問題ないタスク
-    UNKNOWN = const(5)      # 管理対象外
+    ANCILLARY = const(3)    # いつ終了させても問題ないタスク
+    UNKNOWN = const(4)      # 管理対象外
     # タスクの性質のセット
-    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, FLASH, ANCILLARY}
+    TASK_NATURE_SET = {CORE, PERSISTENT, BASIC, ANCILLARY}
 
-    _nature_list = ["CORE", "PERSISTENT", "BASIC", "FLASH", "ANCILLARY", "UNKNOWN"]
+    _nature_list = ["CORE", "PERSISTENT", "BASIC", "ANCILLARY", "UNKNOWN"]
 
     # タスクのセッション実行結果
     SYNC = const(22)    # SYNCポイントに達した
@@ -199,6 +202,7 @@ class Edas():
         ''' ハンドラーの現在のturn の時刻(ms)を返す '''
         return cls.__ticks_ms
 
+    # ハンドラー ======================================================
     @classmethod
     def _handler(cls, timer):
         ''' 定期的に起動されるハンドラー '''
@@ -221,9 +225,11 @@ class Edas():
 
             if edas._state == cls.START:    # 開始/再開タスク
                 edas._state = cls.EXEC          # 「実行中」に変更
+                edas._start_point = cls.__ticks_ms  # 実行開始ポイント
                 cls.__traceprint(14, "      >>> ", edas, previus_state=cls.START)
 
             elif edas._state == cls.END:    # 終了タスク
+                edas._end_point = cls.__ticks_ms    # 実行終了ポイント
                 if edas._canceled and edas._on_cancel:
                     print("Execute on_canceled")
                     edas._on_cancel()
@@ -274,8 +280,8 @@ class Edas():
                 else:                           # S_PAUSE、S_END 以外は何もしない
                     cls.__traceprint(18, "   > SYNC ", edas)
 
-        # タスクアイドルタイム（nature=BASIC または FLASH のタスクが動いていない時間）を計算
-        if cls.__task_count[cls.BASIC] or cls.__task_count[cls.FLASH]:     # タスクが実行されている
+        # タスクアイドルタイム（nature=BASIC のタスクが動いていない時間）を計算
+        if cls.__task_count[cls.BASIC]:     # タスクが実行されている
             cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
             cls.__taskidle_time_ms = 0
             cls.__task_is_idle = False
@@ -299,6 +305,7 @@ class Edas():
             if fedas in cls.__edata:
                 if fedas._state == cls.PAUSE:   # 「停止中」だったら
                     fedas._state = cls.EXEC         # 「実行」に変更
+                    fedas._start_point = cls.__ticks_ms  # 実行開始ポイント
                     cls.__traceprint(14, "--> shift to EXEC", fedas, previus_state=cls.PAUSE)
                 else:                           # 「停止中」以外
                     cls.__traceprint(8, "--> can't shift to EXEC**", fedas)
@@ -331,10 +338,16 @@ class Edas():
         cls.__is_loop_active = False
 
     @classmethod
-    def cancel_basic_tasks(cls, sync=True):
+    def cancel_tasks(cls, natures=[BASIC, ANCILLARY], sync=False):
+        ''' 動作中の指定の性質のタスクを終了する '''
+        for edas in list(cls.__edata):
+            if edas._task_nature in natures:
+                edas.cancel(sync=sync)
+
+    @classmethod
+    def cancel_basic_tasks(cls, sync=False):
         ''' 動作中の全ての通常タスク（task_nature=BASIC）を終了する '''
         for edas in list(cls.__edata):
-            # print(f"name={edas.name}, stat={edas._state}, nature={edas._task_nature}")
             if edas._task_nature == Edas.BASIC:
                 edas.cancel(sync=sync)
 
@@ -447,13 +460,15 @@ class Edas():
         else:
             Edas.__traceprint(8, "--> can't find** ", self)
 
-    def cancel(self, sync=True):
+    def cancel(self, prevent_next_task=False, sync=True):
         ''' タスクを終了する '''
         _sync = sync and self._terminate_by_sync
         if self in Edas.__edata:
             _pstate = self._state
             if self._state in [Edas.EXEC, Edas.S_PAUSE, Edas.S_END]:
                 self._state = Edas.S_END if _sync else Edas.END
+                if prevent_next_task:
+                    self._follows = []
                 self._canceled = True
                 Edas.__traceprint(11, "--> cancel  ", self, previus_state=_pstate)
             elif self._state in [Edas.START, Edas.PAUSE]:
@@ -571,19 +586,20 @@ if __name__ == '__main__':
                 yield Edas.SYNC
                 _count += 1
             return "**OWARIDAYO**"  # 最後まで実行されれば値を返す
-        except GeneratorExit as e:  # 途中で close()された場合
-            pass
+        # except GeneratorExit as e:  # 途中で close()された場合
+        #     pass
         finally:                    # ジェネレータが終了した
             led.off()
 
 
     print(__doc__)
     print(f"version = {__version__}")
-    Edas.loop_start(tracelevel=10, loop_interval=100, id=0)
+    Edas.loop_start(tracelevel=14, loop_interval=100, id=0)
+    time.sleep(1)
 
     led1 = Pin(16, Pin.OUT)
     led2 = Pin(17, Pin.OUT)
-    task1 = Edas(y_blink(led1, 1000, 200, 5), terminate_by_sync=False, volatile=False)
+    task1 = Edas(y_blink(led1, 1000, 200, 1), name="task1", terminate_by_sync=False, volatile=False)
     task2 = Edas(y_blink(led2, 800, 500, 5), previous_task=task1, terminate_by_sync=True)
     # Eloop.start()
 
@@ -610,3 +626,8 @@ if __name__ == '__main__':
     print(f"{task1.result()=}")
     print(f"{task2.result()=}")
 
+    print()
+    print(f"name ={task1.name}")
+    print(f"start={task1._start_point}")
+    print(f"end  ={task1._end_point}")
+    print(f"lifetime={time.ticks_diff(task1._end_point, task1._start_point):,}")
