@@ -1,56 +1,39 @@
 from machine import Pin, PWM, ADC
 import time
 
-SERVO_PIN = 27
-PWM_FREQ = 50
-
-def pulse_width( val, freq = PWM_FREQ, resol = 65535 ):
-    pulse = freq * val * 1e-6 * resol
-    return int( pulse )
-
-servo = PWM( Pin( SERVO_PIN ) )
-servo.freq( PWM_FREQ )
-
-class Survo():
-    def __init__(self, pwm_freq=50, min_duty = 0.6, max_duty = 2.6) -> None:
-        self.pwm_freq = pwm_freq
-
-
-
-# MAX_VALUE = 65535
-# MIN_VALUE = 224
-# SCALE = MAX_VALUE - MIN_VALUE
 
 class Volume:
-    def __init__(self, gpio, max_value=65535, min_value=255) -> None:
-        self.max_value = max_value
-        self.min_value = min_value
-        self.scale = self.max_value - self.min_value
-
+    ''' Picoの ADCポートを使用して可変抵抗器の値を取得するクラス '''
+    def __init__(self, gpio, offset=256) -> None:
         self.port_adc = ADC(Pin(gpio))
 
+        self._full_scale_adc_value = 65535
+        self._offset = offset
+        self._effective_range = self._full_scale_adc_value - self._offset
+
     def get_value(self):
+        ''' 可変抵抗器の値を 0.0 - 1.0の範囲で取得する '''
         _value = self.port_adc.read_u16()
-        return max(0, min((_value - self.min_value) / self.scale, 1.0))
+        return max(0, min((_value - self._offset) / self._effective_range, 1.0))
 
 
 class Servo():
+    ''' サーボモーターを制御するクラス '''
     def __init__(self,
                  gpio,                  # GPIO No.
                  pwm_freq=50,           # Duty cycle(Hz)
-                 duty_min = 0.6,        # minimum positon(msec)
-                 duty_max = 2.6,        # maximum positon(msec)
-                 rotation_angle=180,    # rotation_angle
+                 duty_min = 0.6,        # minimum positon duty(msec)
+                 duty_max = 2.6,        # maximum positon duty(msec)
+                 rotation_angle=180,    # rotation_angle(degree)
                  invert=False           # invert
                  ):
 
         self.servo = PWM(Pin(gpio))
         self.servo.freq(pwm_freq)
-        print(f"{self.servo.freq()=}")
 
         self.pwm_freq = pwm_freq
-        self.max_width = 1 / 50 * 1000
-        print(f"{self.max_width=}")
+        # self.max_width = 1 / 50 * 1000
+        # print(f"{self.max_width=}")
         self.duty_min = duty_min
         self.duty_max = duty_max
         self.duty_span = duty_max - duty_min   # spam of duty(msec)
@@ -61,7 +44,10 @@ class Servo():
         print(f"{ratio=}")
         ratio = (1 - ratio) if self.invert else ratio
         duty = self.duty_min + self.duty_span * ratio
-        self.servo.duty_u16( int(65535 * duty / self.max_width))
+        # self.servo.duty_u16( int(65535 * duty / self.max_width))
+        self.servo.duty_ns(int(duty * 1000000))
+        # ns = self.servo.duty_ns()
+        # print(f"{duty=}, {ns=}")
 
     def rotate_by_degree(self, degree):
         ratio = degree / self.rotation_angle
@@ -97,17 +83,12 @@ vfilter = ValueFilter(threshhold=0.001)
 vfilter2 = ValueFilter(threshhold=0.0001)
 
 while True:
-    # adc_value = port_adc.read_u16()
-    # print(adc_value)
-
-    # percentage = ((adc_value - MIN_VALUE) / SCALE) * 100
     ratio = port_adc.get_value()
     ratio2 = port_adc2.get_value()
-    # print(f"{ratio=}")
 
     if vfilter.has_changed(ratio):
         servo.rotate(ratio)
     if vfilter2.has_changed(ratio2):
         servo2.rotate(ratio2)
 
-    time.sleep(0.005)
+    time.sleep(0.5)
