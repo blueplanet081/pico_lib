@@ -36,14 +36,18 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 - [4. 　show\_version()　MicroPythonのバージョン情報を表示する](#4-show_versionmicropythonのバージョン情報を表示する)
 - [5. 　show\_implementation()　MicroPythonの実装情報を表示する](#5-show_implementationmicropythonの実装情報を表示する)
 - [6. 　show\_unique\_id()　固有IDを表示する](#6-show_unique_id固有idを表示する)
-- [7. 　run()　Pico上のプログラムを実行する](#7-runpico上のプログラムを実行する)
-- [8. 　delete\_module()　importしたモジュールを削除する](#8-delete_moduleimportしたモジュールを削除する)
-- [9. 　wlan\_connect()　指定のワイヤレスネットワークに接続する](#9-wlan_connect指定のワイヤレスネットワークに接続する)
-- [10. 　wlan\_isconnected()　ワイヤレスネットワークに接続されているかどうかを判断する](#10-wlan_isconnectedワイヤレスネットワークに接続されているかどうかを判断する)
-- [11. 　wlan\_disconnect()　ワイヤレスネットワークから切断する](#11-wlan_disconnectワイヤレスネットワークから切断する)
-- [12. 　wlan\_scan()　利用可能なワイヤレスネットワークをスキャンする](#12-wlan_scan利用可能なワイヤレスネットワークをスキャンする)
-- [13. 　wlan\_ifconfig()　IPアドレス、サブネットマスク、ゲートウェイ、DNSサーバーを取得する](#13-wlan_ifconfigipアドレスサブネットマスクゲートウェイdnsサーバーを取得する)
-- [14. 　wlan\_config()　ネットワークインターフェースパラメータを取得する](#14-wlan_configネットワークインターフェースパラメータを取得する)
+- [7. 　show\_files()　ファイルとディレクトリの一覧を表示する](#7-show_filesファイルとディレクトリの一覧を表示する)
+- [8. 　run()　Pico上のプログラムを実行する](#8-runpico上のプログラムを実行する)
+- [9. 　delete\_module()　importしたモジュールを削除する](#9-delete_moduleimportしたモジュールを削除する)
+- [10. 　wlan\_connect()　指定のワイヤレスネットワークに接続する](#10-wlan_connect指定のワイヤレスネットワークに接続する)
+- [11. 　wlan\_isconnected()　ワイヤレスネットワークに接続されているかどうかを判断する](#11-wlan_isconnectedワイヤレスネットワークに接続されているかどうかを判断する)
+- [12. 　wlan\_disconnect()　ワイヤレスネットワークから切断する](#12-wlan_disconnectワイヤレスネットワークから切断する)
+- [13. 　wlan\_scan()　利用可能なワイヤレスネットワークをスキャンする](#13-wlan_scan利用可能なワイヤレスネットワークをスキャンする)
+- [14. 　wlan\_ifconfig()　IPアドレス、サブネットマスク、ゲートウェイ、DNSサーバーを取得する](#14-wlan_ifconfigipアドレスサブネットマスクゲートウェイdnsサーバーを取得する)
+- [15. 　wlan\_config()　ネットワークインターフェースパラメータを取得する](#15-wlan_configネットワークインターフェースパラメータを取得する)
+- [16. 　set\_ntp()　NTPサーバから時刻を取得して設定する](#16-set_ntpntpサーバから時刻を取得して設定する)
+- [17. 　show\_localtime　現在時刻を表示する（UTC+9）](#17-show_localtime現在時刻を表示するutc9)
+- [18. 　show\_gmtime　現在時刻を表示する（UTC）](#18-show_gmtime現在時刻を表示するutc)
 
 ### 1. 　help()　関数一覧を表示する
 
@@ -51,15 +55,12 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    MicroPython v1.23.0 on 2024-06-02; Raspberry Pi Pico W with RP2040
-    Type "help()" for more information or .help for custom vREPL commands.
-
-    >>> import neos
     >>> neos.help()
     show_memory_info() : Display memory usage.
     show_frequency() : Display the operating frequency.
     show_version() : Display the MicroPython interpreter version.
     show_implementation() : Display MicroPython implementation details.
+    show_uname() : Display basic system and device information.
     show_unique_id() : Display the unique ID of the machine.
     run(filename) : Execute a program on the Pico.
     delete_module(modulename='neos') : Remove an imported module.
@@ -126,7 +127,26 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     machine.unique_id()=b'\xe6ad\x08C\x13?&'(0xe661640843133f26)
     >>> 
 
-### 7. 　run()　Pico上のプログラムを実行する
+### 7. 　show_files()　ファイルとディレクトリの一覧を表示する
+
+- ファイルとディレクトリの一覧を表示する。
+- タイムスタンプはアップロード時の Picoの現在時になるらしいので、そのときに時刻が設定されている必要がある。
+- 時刻の設定は set_ntp() を参照。
+
+#### 実行例 <!-- omit in toc -->
+
+    >>> neos.show_files()
+    lib/
+        e_machine.py         31,320 bytes  2021/01/01 14:20:30
+        e_module.py          26,135 bytes  2021/01/01 09:25:02
+        neos.py               5,134 bytes  2021/01/01 14:08:45
+        wlan_info.py            139 bytes  2021/01/01 13:35:42
+    e_machine.py         33,775 bytes  2021/01/01 10:08:59
+    e_module.py          26,862 bytes  2025/06/15 18:51:15
+    neos.py               8,567 bytes  2025/06/15 20:04:50
+    >>> 
+
+### 8. 　run()　Pico上のプログラムを実行する
 
 - Pico上のプログラムを main.pyと同じように（`__name__ == '__main__'` として）実行する。
 
@@ -149,7 +169,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     # 以降、mymachine.py が __name__ == '__main__'　として実行される
 
 
-### 8. 　delete_module()　importしたモジュールを削除する
+### 9. 　delete_module()　importしたモジュールを削除する
 
 - vREPL上で、importしたモジュールを強制的に削除する。
 - vREPL上で importしたモジュールのソースを変更する場合、再度同じモジュールを importしても変更が反映されない。vREPL環境を再起動せずに変更を反映させるには、以下の手順が必要になる。
@@ -169,7 +189,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     >>> import neos
     >>> 
 
-### 9. 　wlan_connect()　指定のワイヤレスネットワークに接続する
+### 10. 　wlan_connect()　指定のワイヤレスネットワークに接続する
 
 - 指定のワイヤレスネットワークに接続する。
 - 接続情報（SSID とパスワード）は、wlan_info.py の中に記述する。
@@ -192,7 +212,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     IP address: 192.168.0.xx
     >>> 
 
-### 10. 　wlan_isconnected()　ワイヤレスネットワークに接続されているかどうかを判断する
+### 11. 　wlan_isconnected()　ワイヤレスネットワークに接続されているかどうかを判断する
 
 - 現在、ワイヤレスネットワークに接続されているかどうかを判断する。
 
@@ -202,7 +222,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     wlan.isconnected()=True
     >>> 
 
-### 11. 　wlan_disconnect()　ワイヤレスネットワークから切断する
+### 12. 　wlan_disconnect()　ワイヤレスネットワークから切断する
 
 - 接続中のワイヤレスネットワークから切断する。
 
@@ -213,7 +233,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     wlan.isconnected()=False
     >>> 
 
-### 12. 　wlan_scan()　利用可能なワイヤレスネットワークをスキャンする
+### 13. 　wlan_scan()　利用可能なワイヤレスネットワークをスキャンする
 
 - 利用可能なワイヤレスネットワークのSSID、MACアドレス、チャンネル、RSSI、セキュリティ、hiddenの情報をタプルで表示する。
 
@@ -225,7 +245,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     (b'BCW710J-xxxxx-G', b'\xfcJ\xe90\x94\xc7', 6, -61, 7, 3)
     >>> 
 
-### 13. 　wlan_ifconfig()　IPアドレス、サブネットマスク、ゲートウェイ、DNSサーバーを取得する
+### 14. 　wlan_ifconfig()　IPアドレス、サブネットマスク、ゲートウェイ、DNSサーバーを取得する
 
 - IP アドレス、サブネットマスク、ゲートウェイ、DNS サーバーの情報をタプルで表示する。
 
@@ -236,7 +256,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     ('192.168.0.xx', '255.255.255.0', '192.168.0.1', '202.122.48.103')
     >>> 
 
-### 14. 　wlan_config()　ネットワークインターフェースパラメータを取得する
+### 15. 　wlan_config()　ネットワークインターフェースパラメータを取得する
 
 - 指定されたネットワークインターフェースパラメータの値を表示する。
 
@@ -256,4 +276,50 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
     wlan.config('hostname')=PicoW
     >>> neos.wlan_config('txpower')
     wlan.config('txpower')=31(0x1f)
+    >>> 
+
+### 16. 　set_ntp()　NTPサーバから時刻を取得して設定する
+
+- NTPサーバから時刻を取得して設定する。
+- ネットワークに接続されている必要があるので、内部で wlan_connect() を呼び出している。
+- 接続情報（SSID とパスワード）については、wlan_connect() の説明を参照のこと。
+
+#### 実行例 <!-- omit in toc -->
+
+    >>> neos.set_ntp()
+    try to connect ssid=xxxxxxx-xxxxA-G passwd=xxxxxxxx
+    Connecting to Wi-Fi...
+    Connecting to Wi-Fi...
+    Connecting to Wi-Fi...
+    Connecting to Wi-Fi...
+    Connecting to Wi-Fi...
+    Connecting to Wi-Fi...
+    Connected to Wi-Fi
+    IP address: 192.168.0.xx
+    2025/06/15 20:05:31
+    2025/06/15 20:05:31
+    2025/06/15 20:05:32
+    2025/06/15 20:05:32
+    2025/06/15 20:05:33
+    >>> 
+
+### 17. 　show_localtime　現在時刻を表示する（UTC+9）
+
+- 現在時刻を表示する（UTC+9）。
+- タイムゾーンは UTC+9 決め打ち。
+
+#### 実行例 <!-- omit in toc -->
+
+    >>> neos.show_localtime()
+    2025/06/15 20:05:56
+    >>> 
+
+### 18. 　show_gmtime　現在時刻を表示する（UTC）
+
+- 現在時刻を表示する（UTC）。
+
+#### 実行例 <!-- omit in toc -->
+
+    >>> neos.show_gmtime()
+    2025/06/15 11:06:03
     >>> 
