@@ -97,54 +97,54 @@ class Eloop():
             yield
 
 # -------------------------- Button class  below ---------------------------------------------
-# class KeyList():
-#     ''' (key, value) のリストを制御する Dicもどきクラス
-#         MycroPythonの Dicでは Pinオブジェクトをkeyにできなかったための代案
-#     '''
-#     def __init__(self):
-#         self._klist: list[list[object]] = []
+class KeyList():
+    ''' (key, value) のリストを制御する Dicもどきクラス
+        MycroPythonの Dicでは Pinオブジェクトをkeyにできなかったための代案
+    '''
+    def __init__(self):
+        self._klist: list[list[object]] = []
 
-#     def __setitem__(self, key, value):
-#         for _item in self._klist:
-#             if _item[0] == key:
-#                 _item[1] = value
-#                 return
-#         self._klist.append([key, value])
-#         return
+    def __setitem__(self, key, value):
+        for _item in self._klist:
+            if _item[0] == key:
+                _item[1] = value
+                return
+        self._klist.append([key, value])
+        return
 
-#     def __getitem__(self, key):
-#         for _item in self._klist:
-#             if _item[0] == key:
-#                 return _item[1]
-#         return None
+    def __getitem__(self, key):
+        for _item in self._klist:
+            if _item[0] == key:
+                return _item[1]
+        return None
 
-#     def __delitem__(self, key):
-#         for i, _item in enumerate(self._klist):
-#             if _item[0] == key:
-#                 del self._klist[i]
+    def __delitem__(self, key):
+        for i, _item in enumerate(self._klist):
+            if _item[0] == key:
+                del self._klist[i]
 
-#     def __iter__(self):
-#         self.index = 0
-#         return self
+    def __iter__(self):
+        self.index = 0
+        return self
 
-#     def __next__(self):
-#         if self.index < len(self._klist):
-#             result = self._klist[self.index]
-#             self.index += 1
-#             return result
-#         raise StopIteration
+    def __next__(self):
+        if self.index < len(self._klist):
+            result = self._klist[self.index]
+            self.index += 1
+            return result
+        raise StopIteration
 
-#     def __len__(self):
-#         return len(self._klist)
+    def __len__(self):
+        return len(self._klist)
 
-#     def keys(self):
-#         return [item[0] for item in self._klist]
+    def keys(self):
+        return [item[0] for item in self._klist]
 
-#     def values(self):
-#         return [item[1] for item in self._klist]
+    def values(self):
+        return [item[1] for item in self._klist]
 
-#     def items(self):
-#         return [(item[0], item[1]) for item in self._klist]
+    def items(self):
+        return [(item[0], item[1]) for item in self._klist]
 
 
 class Bootsel_button():
@@ -160,7 +160,7 @@ class Button():
     HELD = const(3)         # ボタンが長押しされた
     REPEATED = const(4)     # ボタンが押し続けられた
 
-    __plist = {}            # Pinを登録する辞書
+    __plist = KeyList()     # Pinを登録するリスト（Dicもどき）
 
     __loop_period = 100     # Timerの周期
     __loop_point = 0        # ボタンloopの起点
