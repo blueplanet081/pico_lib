@@ -3,7 +3,8 @@ import network
 import socket
 import time
 import random # 温度シミュレーション用
-from wifi_config import SSID, PASSWORD
+# from wifi_config import SSID, PASSWORD
+from wlan_info import SSID, PASSWORD
 
 # 受信側のPico WのIPアドレスに置き換えてください！
 # 受信側を起動し、そのPico WのIPアドレスを確認してからここに設定してください。

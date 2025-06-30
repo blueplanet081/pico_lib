@@ -6,9 +6,9 @@ def lblink(pin, on_time, off_time, n):
     count = 0
     while not n or count < n:
         pin.value(1)
-        yield from ctime.y_wait(on_time, update=True)
+        yield from ctime.y_wait_ms(on_time, update=True)
         pin.value(0)
-        yield from ctime.y_wait(off_time, update=True)
+        yield from ctime.y_wait_ms(off_time, update=True)
         count += 1
 
 led = Pin("LED", Pin.OUT)

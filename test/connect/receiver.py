@@ -2,12 +2,13 @@
 import network
 import socket
 import time
-from wifi_config import SSID, PASSWORD
+# from wifi_config import SSID, PASSWORD
+from wlan_info import ssid, passwd
 
 # Wi-Fi接続
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
-wlan.connect(SSID, PASSWORD)
+wlan.connect(ssid, passwd)
 
 # 接続待機
 max_wait = 10

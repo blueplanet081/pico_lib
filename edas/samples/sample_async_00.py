@@ -1,5 +1,6 @@
 '''
-sample00.py
+sample_async_00.py
+asyncと協調テスト
 - Pico W 本体のLEDとボタンの操作
   - プログラム開始時に LEDを 3回点滅させる
   - ボタンを押して点滅開始、ボタン長押しで消灯
@@ -10,7 +11,7 @@ from e_module import Edas
 from e_machine import Eloop, Button, Bootsel_button, LED
 
 # Eloop.start(loop_interval=10, tracelevel=14)
-Eloop.start(loop_interval=10, tracelevel=0)
+Eloop.start(loop_interval=10, tracelevel=0, id=-1)
 bloop = Button.start(period=100, tracelevel=0)
 
 led_0 = LED("LED")
@@ -36,7 +37,7 @@ async def main(led1, led2):
     asyncio.create_task(blink(led2, 400))
     tt = asyncio.current_task()
     print(dir(tt))
-    await asyncio.sleep_ms(10_000)
+    await asyncio.sleep_ms(50_000)
 
 # la = LED(16)
 # Eloop.start(id=0)
