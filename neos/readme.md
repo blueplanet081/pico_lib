@@ -10,7 +10,7 @@ vREPL ターミナルから、接続された Raspberry Pi Pico / Pico W の状�
 
 #### importして関数一覧を表示する
 
-![alt text](image/neos_import画面.png)
+![alt text](image/neos_import画面s.png)
 
 
 #### 現在のメモリの使用状況を表示する
