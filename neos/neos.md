@@ -26,11 +26,18 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
         └── neos.py
             wlan_info.py
 
+## 使用方法 <!-- omit in toc -->
+
+vREPL画面から直接、`import neos` または `from neos import *`　でインポート、各関数を直接呼び出して使用してください。
+
+![alt text](image/neos_import画面.png)
+
+
 <br>
 
 ## 関数一覧 <!-- omit in toc -->
 
-- [1. 　help()　関数一覧を表示する](#1-help関数一覧を表示する)
+- [1. 　show\_help() / info()　関数一覧を表示する](#1-show_help--info関数一覧を表示する)
 - [2. 　show\_memory\_info()　メモリの使用状況を表示する](#2-show_memory_infoメモリの使用状況を表示する)
 - [3. 　show\_frequency()　動作周波数を表示する](#3-show_frequency動作周波数を表示する)
 - [4. 　show\_version()　MicroPythonのバージョン情報を表示する](#4-show_versionmicropythonのバージョン情報を表示する)
@@ -51,14 +58,15 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 <br>
 
-### 1. 　help()　関数一覧を表示する
+### 1. 　show_help() / info()　関数一覧を表示する
 
 - neosモジュールで使える関数の一覧を表示する。
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.help()
-    show_memory_info() : Display memory usage.
+   
+    >>> show_help()
+    show_help() or info() : Display this message.
     show_frequency() : Display the operating frequency.
     show_version() : Display the MicroPython interpreter version.
     show_implementation() : Display MicroPython implementation details.
@@ -83,7 +91,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_memory_info()
+    >>> show_memory_info()
     memory info:
       total:   191,424 bytes
       use:       8,400 bytes  (4.4%)
@@ -98,7 +106,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_frequency()
+    >>> show_frequency()
     machine.freq()=125000000 (125,000,000Hz)
     >>> 
 
@@ -110,7 +118,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_version()
+    >>> show_version()
     sys.version=3.4.0; MicroPython v1.23.0 on 2024-06-02
     >>> 
 
@@ -122,7 +130,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_implementation()
+    >>> show_implementation()
     sys.implementation=(name='micropython', version=(1, 23, 0, ''), _machine='Raspberry Pi Pico W with RP2040', _mpy=4870)
     >>> 
 
@@ -135,7 +143,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_unique_id()
+    >>> show_unique_id()
     machine.unique_id()=b'\xe6ad\x08C\x13?&'(0xe661640843133f26)
     >>> 
 
@@ -150,7 +158,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_files()
+    >>> show_files()
     lib/
       e_machine.py         33,775 bytes  2025/06/15 22:11:45
       e_module.py          26,862 bytes  2025/06/15 18:51:15
@@ -167,14 +175,14 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_files()
+    >>> show_files()
     lib/
       e_machine.py         33,775 bytes  2025/06/15 22:11:45
       e_module.py          26,862 bytes  2025/06/15 18:51:15
       neos.py               8,567 bytes  2025/06/15 20:04:50
       wlan_info.py            141 bytes  2025/06/15 22:10:08
     sample_m.py           7,962 bytes  2025/06/15 22:13:54
-    >>> neos.run("sample_m.py")
+    >>> run("sample_m.py")
 
     # 以降、sample_m.py が __name__ == '__main__'　として実行される
 
@@ -192,12 +200,12 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.delete_module()
+    >>> delete_module()
     try to delete modulename=neos
 
     # neos.py をアップロードする
 
-    >>> import neos
+    >>> from neos import *
     >>> 
 
 <br>
@@ -213,7 +221,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.wlan_connect()
+    >>> wlan_connect()
     try to connect ssid=xxxxxxx-xxxxA-G passwd=xxxxxxxx
     Connecting to Wi-Fi...
     Connecting to Wi-Fi...
@@ -233,7 +241,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.wlan_isconnected()
+    >>> wlan_isconnected()
     wlan.isconnected()=True
     >>> 
 
@@ -245,8 +253,8 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.wlan_disconnect()
-    >>> neos.wlan_isconnected()
+    >>> wlan_disconnect()
+    >>> wlan_isconnected()
     wlan.isconnected()=False
     >>> 
 
@@ -258,7 +266,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.wlan_scan()
+    >>> wlan_scan()
     (b'BCW710J-xxxxx-G', b'\xfcJ\xe90\x94\xe5', 1, -50, 7, 4)
     (b'iPhone15', b'Nr\x8fl+\xeb', 1, -36, 5, 3)
     (b'BCW710J-xxxxx-G', b'\xfcJ\xe90\x94\xc7', 6, -61, 7, 3)
@@ -272,7 +280,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.wlan_ifconfig()
+    >>> wlan_ifconfig()
     IP address: 192.168.0.xx
     ('192.168.0.xx', '255.255.255.0', '192.168.0.1', '202.122.48.103')
     >>> 
@@ -285,19 +293,19 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.wlan_config()
+    >>> wlan_config()
     You must specify 'mac', 'ssid', 'channel', 'security', 'hostname'  or 'txpower' as a parameter.
-    >>> neos.wlan_config('mac')
+    >>> wlan_config('mac')
     wlan.config('mac')=b'(\xcd\xc1\tv,'(0x28cdc109762c)
-    >>> neos.wlan_config('ssid')
+    >>> wlan_config('ssid')
     wlan.config('ssid')=BCW710J-xxxxx-G
-    >>> neos.wlan_config('channel')
+    >>> wlan_config('channel')
     wlan.config('channel')=1(0x1)
-    >>> neos.wlan_config('security')
+    >>> wlan_config('security')
     wlan.config('security')=4194308(0x400004)
-    >>> neos.wlan_config('hostname')
+    >>> wlan_config('hostname')
     wlan.config('hostname')=PicoW
-    >>> neos.wlan_config('txpower')
+    >>> wlan_config('txpower')
     wlan.config('txpower')=31(0x1f)
     >>> 
 
@@ -311,7 +319,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.set_ntp()
+    >>> set_ntp()
     try to connect ssid=xxxxxxx-xxxxA-G passwd=xxxxxxxx
     Connecting to Wi-Fi...
     Connecting to Wi-Fi...
@@ -337,8 +345,8 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_localtime()
-    2025/06/15 20:05:56
+    >>> show_localtime()
+    2025/07/11 15:56:51
     >>> 
 
 <br>
@@ -349,5 +357,6 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 #### 実行例 <!-- omit in toc -->
 
-    >>> neos.show_gmtime()
-        >>> 
+    >>> show_gmtime()
+    2025/07/11 06:57:00
+    >>> 

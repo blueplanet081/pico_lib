@@ -6,6 +6,25 @@ import os
 import machine
 import ntptime
 
+# リセットコード
+RESET = "\x1b[0m"
+
+# 文字色
+RED = "\x1b[31m"
+GREEN = "\x1b[32m"
+YELLOW = "\x1b[33m"
+BLUE = "\x1b[34m"
+MAGENTA = "\x1b[35m"
+CYAN = "\x1b[36m"
+WHITE = "\x1b[37m"
+
+# 太字
+BOLD = "\x1b[1m"
+
+# 背景色
+BG_RED = "\x1b[41m"
+BG_GREEN = "\x1b[42m"
+
 def getkeys_from_kv_tuple(data):
     ''' key=value形式の特殊なtupleから、keyのリストを取得する '''
     w_keys = str(data)[1:-1].split("=")[0:-1]
@@ -27,26 +46,30 @@ def str_ftime(timestamp_seconds):
     # 年/月/日 時:分:秒 の形式でフォーマット
     return f"{t[0]:04d}/{t[1]:02d}/{t[2]:02d} {t[3]:02d}:{t[4]:02d}:{t[5]:02d}"
 
-def help():
-    print("show_memory_info() : Display memory usage.")
-    print("show_frequency() : Display the operating frequency.")
-    print("show_version() : Display the MicroPython interpreter version.")
-    print("show_implementation() : Display MicroPython implementation details.")
-    print("show_uname() : Display basic system and device information.")
-    print("show_unique_id() : Display the unique ID of the machine.")
-    print("show_files() : List Files and Directories")
-    print("run(filename) : Execute a program on the Pico.")
-    print("delete_module(modulename='neos') : Remove an imported module.")
+def info():
+    show_help()
+
+def show_help():
+    print(YELLOW + "show_help() or info()" + RESET + " : Display this message.")
+    print(YELLOW + "show_memory_info()" + RESET + " : Display memory usage.")
+    print(YELLOW + "show_frequency()" + RESET + " : Display the operating frequency.")
+    print(YELLOW + "show_version()" + RESET + " : Display the MicroPython interpreter version.")
+    print(YELLOW + "show_implementation()" + RESET + " : Display MicroPython implementation details.")
+    print(YELLOW + "show_uname()" + RESET + " : Display basic system and device information.")
+    print(YELLOW + "show_unique_id()" + RESET + " : Display the unique ID of the machine.")
+    print(YELLOW + "show_files()" + RESET + " : List Files and Directories")
+    print(YELLOW + "run('filename')" + RESET + " : Execute a program on the Pico.")
+    print(YELLOW + "delete_module(modulename='neos')" + RESET + " : Remove an imported module.")
     print()
-    print("wlan_connect() : Connect to a specified wireless network.")
-    print("wlan_isconnected() : Check if connected to a wireless network.")
-    print("wlan_disconnect() : Disconnect from a wireless network.")
-    print("wlan_scan(): Scan for available wireless networks.")
-    print("wlan_ifconfig() : Retrieve IP address, subnet mask, gateway, and DNS server.")
-    print("wlan_config(param=None) : Retrieve network interface parameters.")
-    print("set_ntp() : Set Time from an NTP Server.")
-    print("show_localtime() : Display Current Time (UTC+9).")
-    print("show_gmtime() : Display Current Time (UTC).")
+    print(YELLOW + "wlan_connect()" + RESET + " : Connect to a specified wireless network.")
+    print(YELLOW + "wlan_isconnected()" + RESET + " : Check if connected to a wireless network.")
+    print(YELLOW + "wlan_disconnect()" + RESET + " : Disconnect from a wireless network.")
+    print(YELLOW + "wlan_scan()" + RESET + ": Scan for available wireless networks.")
+    print(YELLOW + "wlan_ifconfig()" + RESET + " : Retrieve IP address, subnet mask, gateway, and DNS server.")
+    print(YELLOW + "wlan_config(param=None)" + RESET + " : Retrieve network interface parameters.")
+    print(YELLOW + "set_ntp()" + RESET + " : Set Time from an NTP Server.")
+    print(YELLOW + "show_localtime()" + RESET + " : Display Current Time (UTC+9).")
+    print(YELLOW + "show_gmtime()" + RESET + " : Display Current Time (UTC).")
 
 def show_memory_info():
     ''' メモリの使用状況を表示 '''
@@ -240,3 +263,9 @@ def show_files():
 
     # ルートディレクトリから探索を開始
     show_files()
+
+print(GREEN + BOLD, end="")
+print('"neos" is a MicroPython module for displaying information about '
+      'the Raspberry Pi Pico / Pico W and performing simple operations within the vREPL environment.')
+print(RESET, end="")
+print('Type "show_help()" or "info()" for more information.')

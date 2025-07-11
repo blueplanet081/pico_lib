@@ -7,9 +7,15 @@ vREPL ターミナルから、接続された Raspberry Pi Pico / Pico W の状�
 <br>
 
 ## 使用例
+
+#### importして関数一覧を表示する
+
+![alt text](image/neos_import画面.png)
+
+
 #### 現在のメモリの使用状況を表示する
 
-    >>> neos.show_memory_info()
+    >>> show_memory_info()
     memory info:
     total:   191,424 bytes
     use:       8,400 bytes  (4.4%)
@@ -18,7 +24,7 @@ vREPL ターミナルから、接続された Raspberry Pi Pico / Pico W の状�
 
 #### MicroPythonのバージョン情報を表示する
 
-    >>> neos.show_version()
+    >>> show_version()
     sys.version=3.4.0; MicroPython v1.23.0 on 2024-06-02
     >>> 
 
@@ -28,7 +34,7 @@ vREPL ターミナルから、接続された Raspberry Pi Pico / Pico W の状�
 
 | ファイル名                   | 内容                  | ver. | 日付       | メモ |
 | ---------------------------- | --------------------- | ---- | ---------- | ---- |
-| readme.md                    | 本書                  |      | 2025/06/15 |      |
-| [neos.md](neos.md)           | neosモジュール説明書  | 1.1  | 2025/06/16 |追加機能の説明を追加 |
-| neos.py                      | neosモジュール本体    | 1.1  | 2025/06/15 |show_files()、set_ntp() 等追加 |
+| readme.md                    | 本書                  |      | 2025/07/11 |      |
+| [neos.md](neos.md)           | neosモジュール説明書  | 1.2  | 2025/07/11 |neosモジュールの変更に伴い説明、説明画面を変更 |
+| neos.py                      | neosモジュール本体    | 1.2  | 2025/07/11 |help() を show_help()に変更、同機能の info()を追加、import時の説明表示を追加等 |
 | [wlan_info.py](wlan_info.py) | Wi-Fi情報定義ファイル | 1.0  | 2025/03/30 |      |
