@@ -30,7 +30,7 @@ Raspberry Pi Pico / Pico W の情報を MicroPythonの vREPL環境に表示し�
 
 vREPL画面から直接、`import neos` または `from neos import *`　でインポート、各関数を直接呼び出して使用してください。
 
-![alt text](image/neos_import画面.png)
+![alt text](image/neos_import画面s.png)
 
 
 <br>
