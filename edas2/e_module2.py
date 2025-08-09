@@ -9,7 +9,9 @@ __version__ = (0, 10, 1)
 import time
 from micropython import const
 from machine import Timer
+import machine
 import rp2
+import _thread
 
 TypeGenerator = type((lambda: (yield))())
 
@@ -17,18 +19,22 @@ def is_generator(obj):
     ''' ジェネレータオブジェクトの判定 '''
     return isinstance(obj, TypeGenerator)
 
+def get_core_id():
+    ''' 現在動作している core id を取得する '''
+    return machine.mem32[0xd0000000]
+
 class Edas():
     ''' 並行処理クラス '''
-    class Suspender():
-        ''' with構文を使ってturnの開始を一時的にfreezeさせるクラス '''
-        def __init__(self, freezetime=5):
-            self.freezetime = freezetime
+    # class Suspender():
+    #     ''' with構文を使ってturnの開始を一時的にfreezeさせるクラス '''
+    #     def __init__(self, freezetime=5):
+    #         self.freezetime = freezetime
 
-        def __enter__(self):
-            Edas.__freeze_handler(self.freezetime)
+    #     def __enter__(self):
+    #         Edas.__freeze_handler(self.freezetime)
 
-        def __exit__(self, exc_type, exc_value, traceback):
-            Edas.__defreeze_handler()
+    #     def __exit__(self, exc_type, exc_value, traceback):
+    #         Edas.__defreeze_handler()
 
     # タスクの状態
     NULL = const(0)     # 無効
@@ -60,6 +66,9 @@ class Edas():
 
     TIMER_ID = -1       # タイマーID
 
+    
+    __print_lock = _thread.allocate_lock()      # trace print用 lockオブジェクト
+    __edata_lock = _thread.allocate_lock()      # タスクのリストの lockオブジェクト
     __edata = []                # タスクのリスト
     __tdata = []                # 終了したタスクのリスト
 
@@ -70,6 +79,8 @@ class Edas():
     __is_loop_active = False    # イベントループが実行中か
     __tracelevel = 0            # トレースレベル
 
+    __is_core0_active = False   # Core 0 のイベントループの実行許可
+
     __in_Task = False           # タスク実行中か
     __ticks_ms = time.ticks_ms()    # handlerの現在のturnの開始時刻（同期用）
     __touched_point = __ticks_ms    # タスク実行ポイント（最後に BASICのタスクを実行した時刻）
@@ -77,9 +88,6 @@ class Edas():
     __task_is_idle = False          # turn中、BASICのタスクが実行されなかったら True
     __endpoint = 0              # handlerの終了時刻（デバッグ用）
     __entpoint = 0              # handlerの開始時刻（デバッグ用）
-
-    __freezed = False           # handler凍結中かどうか
-    __freezetime = 2            # 一回のfreeze時間(ms)
 
     def __init__(self, gen, core=0, name=None, previous_task=None, pause=False, on_cancel=None,
                  terminate_by_sync=False, task_nature=BASIC, volatile=True):
@@ -133,19 +141,12 @@ class Edas():
         if self._state == Edas.START:
             Edas.__task_is_idle = False
 
-        Edas.__edata.append(self)   # タスクリストに登録
+        with Edas.__edata_lock:
+            print("Lock!!")
+            Edas.__edata.append(self)   # タスクリストに登録
+            print(f"{len(Edas.__edata)=}")
+            time.sleep_ms(10)
 
-    @classmethod
-    def __freeze_handler(cls, freezetime):
-        if not cls.__in_Task:   # タスク中は無効　20250731追加
-            cls.__traceprint(11, "** freeze_handler ")
-            cls.__freezetime = min(freezetime, 20)
-            cls.__freezed = True
-
-    @classmethod
-    def __defreeze_handler(cls):
-        cls.__traceprint(11, "** defreeze_handler ")
-        cls.__freezed = False
 
     @classmethod
     def ticks_ms(cls):
@@ -154,25 +155,65 @@ class Edas():
 
     # ハンドラー ======================================================
     @classmethod
-    def _handler(cls, timer):
+    def _handler_0(cls, timer):
         ''' 定期的に起動されるハンドラー '''
         cls.__entpoint = time.ticks_ms()
 
         cls.__traceprint(28, f"  + ---- loopperiod={time.ticks_diff(time.ticks_ms(), cls.__endpoint)}")
         cls.__endpoint = time.ticks_ms()
 
-        # freeze（一時停止）処理
-        if cls.__freezed:
-            cls.__traceprint(11, f"==== freezed({cls.__freezetime}) ====")
-            timer.init(mode=Timer.ONE_SHOT, period=cls.__freezetime, callback=cls._handler)
+        # タスクのリストのロック回避処理
+        if cls.__edata_lock.acquire(False):
+            pass
+            cls.__edata_lock.release()
+        else:       # ロック中だったので一旦返却
+            print("---------------------------------> oops!")
+            timer.init(mode=Timer.ONE_SHOT, period=10, callback=cls._handler_0)
             return
 
-        # 事前処理 ----------------------------------------------------
+        cls._handler_core()
+        # # 事前処理 ----------------------------------------------------
+
+        # # 実行処理 ----------------------------------------------------
+
+        # タスクアイドルタイム（nature=BASIC のタスクが動いていない時間）を計算
+        if cls.__task_count[cls.BASIC]:     # タスクが実行されている
+            cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
+            cls.__taskidle_time_ms = 0
+            cls.__task_is_idle = False
+        else:                               # タスクアイドル
+            cls.__taskidle_time_ms = time.ticks_diff(cls.__ticks_ms, cls.__touched_point)
+            cls.__task_is_idle = True
+
+        _timespent = time.ticks_diff(time.ticks_ms(), cls.__entpoint)
+        cls.__traceprint(22, f"  +   -- {cls.__task_count=}, {cls.__taskidle_time_ms=}")
+        cls.__traceprint(28, f"  +   -- timespent={_timespent}")
+        _period = max(cls.__interval - _timespent, cls.__interval_min)
+
+        if cls.__is_loop_active:
+            timer.init(mode=Timer.ONE_SHOT, period=_period, callback=cls._handler_0)
+        return
+
+    @classmethod
+    def _handler_1(cls):
+        while cls.__is_core0_active:    # Core 0 のイベントループの実行許可
+            # print("core_1 start")
+            cls._handler_core(core=1)
+            # print("core_1 end")
+            time.sleep_ms(100)
+        print("Core 0 terminate!!!")
+            
+
+    @classmethod
+    def _handler_core(cls, core=0):
+                # 事前処理 ----------------------------------------------------
         cls.__in_Task = True
         cls.__traceprint(24, "alignment process.....")
         cls.__ticks_ms = time.ticks_ms()
 
-        for edas in list(cls.__edata):
+        edata_core0 = [edas for edas in cls.__edata if edas._core == core]
+        # for edas in list(cls.__edata):
+        for edas in list(edata_core0):
 
             if edas._state == cls.START:    # 開始/再開タスク
                 edas._state = cls.EXEC          # 「実行中」に変更
@@ -205,7 +246,8 @@ class Edas():
         cls.__task_count[:] = [0] * (len(cls.TASK_NATURE_SET) + 1)
 
         cls.__traceprint(22, "turn.....")
-        for edas in list(cls.__edata):
+        # for edas in list(cls.__edata):
+        for edas in list(edata_core0):
             cls.__traceprint(32, "  *     ", edas)
             if edas._state not in [cls.EXEC, cls.S_PAUSE, cls.S_END]:
                 continue
@@ -231,25 +273,7 @@ class Edas():
                 else:                           # S_PAUSE、S_END 以外は何もしない
                     cls.__traceprint(18, "   > SYNC ", edas)
 
-        # タスクアイドルタイム（nature=BASIC のタスクが動いていない時間）を計算
-        if cls.__task_count[cls.BASIC]:     # タスクが実行されている
-            cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
-            cls.__taskidle_time_ms = 0
-            cls.__task_is_idle = False
-        else:                               # タスクアイドル
-            cls.__taskidle_time_ms = time.ticks_diff(cls.__ticks_ms, cls.__touched_point)
-            cls.__task_is_idle = True
-
-        _timespent = time.ticks_diff(time.ticks_ms(), cls.__entpoint)
-        cls.__traceprint(22, f"  +   -- {cls.__task_count=}, {cls.__taskidle_time_ms=}")
-        cls.__traceprint(28, f"  +   -- timespent={_timespent}")
-        _period = max(cls.__interval - _timespent, cls.__interval_min)
-
         cls.__in_Task = False
-
-        if cls.__is_loop_active:
-            timer.init(mode=Timer.ONE_SHOT, period=_period, callback=cls._handler)
-        return
 
     @classmethod
     def _set_follows(cls, edas):
@@ -278,12 +302,17 @@ class Edas():
 
             cls.__traceprint(11, f"Edas.loop_start {cls.TIMER_ID=}")
             cls.__timer = Timer(cls.TIMER_ID)       # タイマーモジュール
-            cls.__timer.init(mode=Timer.ONE_SHOT, period=cls.__interval, callback=cls._handler)
+            cls.__timer.init(mode=Timer.ONE_SHOT, period=cls.__interval, callback=cls._handler_0)
+
+        cls.__is_core0_active = True   # Core 0 のイベントループの実行許可
+        _thread.start_new_thread(cls._handler_1, ())
 
     @classmethod
     def loop_stop(cls):
         ''' イベントループを停止する '''
         cls.__is_loop_active = False
+        cls.__is_core0_active = False        
+
 
     @classmethod
     def cancel_tasks(cls, natures=[BASIC, ANCILLARY], sync=False):
@@ -366,22 +395,24 @@ class Edas():
             level  ～ 10  :エラー出力
         '''
         if cls.__tracelevel >= level:
-            if myself:
-                _strstate = f" [{cls._str_state(myself._state)}]"
-                _strnature = f" <{cls._str_nature(myself._task_nature)}>"
-                if previus_state:
-                    _strstate = f" [{cls._str_state(previus_state)}]->" + _strstate
+            _core = get_core_id()
+            with cls.__print_lock:
+                if myself:
+                    _strstate = f" [{cls._str_state(myself._state)}]"
+                    _strnature = f" <{cls._str_nature(myself._task_nature)}>"
+                    if previus_state:
+                        _strstate = f"[{cls._str_state(previus_state)}]->" + _strstate
 
-                print(f"{message}"   + f" name={myself.name} ({myself.type})" +
-                      _strnature +  _strstate + aftermessage)
+                    print(f"[{_core}]{message}"   + f" name={myself.name} ({myself.type})" +
+                        _strnature +  _strstate + aftermessage)
 
-                for yourself in myself._follows:
-                    print("        + " +
-                          f" name={yourself.name} ({yourself.type})" +
-                          f" [{cls._str_state(yourself._state)}]" +
-                          "")
-            else:
-                print(f"{message}")
+                    for yourself in myself._follows:
+                        print("        + " +
+                            f" name={yourself.name} ({yourself.type})" +
+                            f" [{cls._str_state(yourself._state)}]" +
+                            "")
+                else:
+                    print(f"[{_core}] {message}")
 
     def resume(self):
         ''' タスクを開始/再開する '''
@@ -533,7 +564,7 @@ if __name__ == '__main__':
                 yield from _ctime.y_wait_ms(offtime, update=True)
                 yield Edas.SYNC
                 _count += 1
-            return "**OWARIDAYO**"  # 最後まで実行されれば値を返す
+            # return "**OWARIDAYO**"  # 最後まで実行されれば値を返す
         # except GeneratorExit as e:  # 途中で close()された場合
         #     pass
         finally:                    # ジェネレータが終了した
@@ -545,37 +576,46 @@ if __name__ == '__main__':
     Edas.loop_start(tracelevel=14, loop_interval=100)
     time.sleep(1)
 
-    led1 = Pin(16, Pin.OUT)
-    led2 = Pin(17, Pin.OUT)
-    task1 = Edas(y_blink(led1, 1000, 200, 1), name="task1", terminate_by_sync=False, volatile=False)
-    task2 = Edas(y_blink(led2, 800, 500, 5), previous_task=task1, terminate_by_sync=True)
+    led1 = Pin(16, Pin.OUT)     # 赤
+    led2 = Pin(17, Pin.OUT)     # 黄
+    task1 = Edas(y_blink(led1, 500, 200, 5), core=0, name="task1", terminate_by_sync=False, volatile=False)
+    task2 = Edas(y_blink(led2, 800, 500, 5), core=0, previous_task=task1, terminate_by_sync=True)
     # Eloop.start()
 
-    for i in range(1000):
-        # with Eloop.Suspender():
-        print(f"---- round {i} ----")
-        # if i == 1:
-        #     task1.cancel()
-        # print(f"{Edas._get_taskcount()=}")
-        # print(f"{Edas._get_taskcount(Edas.BASIC)=}")
-        print(f"{Edas.idle_time()=}")
+    try:
+        for i in range(1000):
+            # with Eloop.Suspender():
+            print(f"---- round {i} ----")
+            # if i == 1:
+            #     task1.cancel()
+            # print(f"{Edas._get_taskcount()=}")
+            # print(f"{Edas._get_taskcount(Edas.BASIC)=}")
+            # print(f"{Edas.idle_time()=}")
 
-        if Edas.idle_time() > 5.0:
-            break
-        time.sleep_ms(3000)
+            # if Edas.idle_time() > 5.0:
+            #     break
+            time.sleep_ms(3000)
+            task2 = Edas(y_blink(led2, 800, 500, 5), core=0, terminate_by_sync=False)
+            task1 = Edas(y_blink(led1, 500, 200, 5), core=1, name="task1", terminate_by_sync=False, volatile=True)
 
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by Ctrl+C")
+        Edas.loop_stop()
+
+
+
+    print("show_edas()")
+    Edas.show_edas()
+    print("show_done()")
     Edas.show_done()
     print(f"{task1.done()=}")
     print(f"{task1.result()=}")
-    Edas.show_done()
-    print(f"{task2.done()=}")
-    print(f"{task2.result()=}")
-    Edas.show_done()
-    print(f"{task1.result()=}")
-    print(f"{task2.result()=}")
 
     print()
     print(f"name ={task1.name}")
     print(f"start={task1._start_point}")
     print(f"end  ={task1._end_point}")
     print(f"lifetime={time.ticks_diff(task1._end_point, task1._start_point):,}")
+
+    time.sleep(2)
+    print("Bye....")
