@@ -7,7 +7,7 @@ asyncと協調テスト
   - ボタンを 20秒以上操作しないと、LEDを消灯してプログラム終了
 '''
 import time
-from e_module import Edas
+from edas2.e_module2 import Edas
 from e_machine import Eloop, Button, Bootsel_button, LED
 
 # Eloop.start(loop_interval=10, tracelevel=14)

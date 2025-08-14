@@ -25,19 +25,27 @@ class Eloop():
         def __exit__(self, exc_type, exc_value, traceback):
             Edas.__defreeze_handler()
 
+    class Nullcontext:
+        ''' 何もしないコンテキストマネージャ '''
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            pass
+
+
     def __init__(self) -> None:
         pass
 
     @staticmethod
-    def start(loop_interval: int|None=None, tracelevel: int=0, id=0):
+    def start(loop_interval: int|None=None, tracelevel: int=0):
         ''' Edasのイベントループを開始する
 
             args:
                 loop_interval: int（イベントループの間隔 msec）
                 tracelevel: int（トレース情報出力レベル）
-                id: int（タイマーID -1、0 ～ 7）
         '''
-        Edas.loop_start(loop_interval, tracelevel, id=id)
+        Edas.loop_start(loop_interval, tracelevel)
 
     @staticmethod
     def stop():
@@ -95,56 +103,6 @@ class Eloop():
         _now = Edas.ticks_ms()
         while time.ticks_diff(Edas.ticks_ms(), _now) < _wait_ms:
             yield
-
-# -------------------------- Button class  below ---------------------------------------------
-# class KeyList():
-#     ''' (key, value) のリストを制御する Dicもどきクラス
-#         MycroPythonの Dicでは Pinオブジェクトをkeyにできなかったための代案
-#     '''
-#     def __init__(self):
-#         self._klist: list[list[object]] = []
-
-#     def __setitem__(self, key, value):
-#         for _item in self._klist:
-#             if _item[0] == key:
-#                 _item[1] = value
-#                 return
-#         self._klist.append([key, value])
-#         return
-
-#     def __getitem__(self, key):
-#         for _item in self._klist:
-#             if _item[0] == key:
-#                 return _item[1]
-#         return None
-
-#     def __delitem__(self, key):
-#         for i, _item in enumerate(self._klist):
-#             if _item[0] == key:
-#                 del self._klist[i]
-
-#     def __iter__(self):
-#         self.index = 0
-#         return self
-
-#     def __next__(self):
-#         if self.index < len(self._klist):
-#             result = self._klist[self.index]
-#             self.index += 1
-#             return result
-#         raise StopIteration
-
-#     def __len__(self):
-#         return len(self._klist)
-
-#     def keys(self):
-#         return [item[0] for item in self._klist]
-
-#     def values(self):
-#         return [item[1] for item in self._klist]
-
-#     def items(self):
-#         return [(item[0], item[1]) for item in self._klist]
 
 
 class Bootsel_button():
@@ -751,7 +709,7 @@ if __name__ == '__main__':
     task1 = Eloop.create_task(blink(led1, 1000, 1000, 5), name="task1", terminate_by_sync=True)
     task2 = Eloop.create_task(blink(led2, 800, 400, 5), name="task2", previous_task=task1, terminate_by_sync=True)
     # Eloop.start()
-    Eloop.start(tracelevel=11, loop_interval=100, id=0)
+    Eloop.start(tracelevel=11, loop_interval=100)
     bloop = Button.start(pull_up=True, tracelevel=12, period=100)
 
     led_0 = LED("LED")

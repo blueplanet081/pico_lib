@@ -6,7 +6,7 @@ import time
 from micropython import const
 from machine import Timer, Pin, Signal, PWM
 import rp2
-from e_module import Edas, CheckTime
+from edas2.e_module2 import Edas, CheckTime
 
 class Eloop():
     class Suspender():

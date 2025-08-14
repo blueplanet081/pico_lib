@@ -11,7 +11,7 @@ from e_module import Edas
 from e_machine import Eloop, Button, Bootsel_button, LED
 
 # Eloop.start(loop_interval=10, tracelevel=14)
-Eloop.start(loop_interval=10, tracelevel=0, id=-1)
+Eloop.start(loop_interval=10, tracelevel=0)
 bloop = Button.start(period=100, tracelevel=0)
 
 led_0 = LED("LED")
@@ -45,8 +45,8 @@ async def main(led1, led2):
 
 
 from machine import Pin, Signal
-l1 = Signal(17, Pin.OUT)
-l2 = Signal(18, Pin.OUT)
+l1 = Signal(16, Pin.OUT)
+l2 = Signal(17, Pin.OUT)
 asyncio.run(main(l1, l2))
 
 

@@ -1,7 +1,11 @@
 __doc__ = \
-'''-- Edas module for MycroPython'''
-''' CheckTimeの y_wait に update指定を追加 '''
-__version__ = "0.09.04"
+'''
+-- Edas module for MycroPython
+version: 0.9.1
+Author: Blueplanet
+'''
+__version__ = (0, 9, 1)
+
 import time
 from micropython import const
 from machine import Timer
@@ -12,58 +16,6 @@ TypeGenerator = type((lambda: (yield))())
 def is_generator(obj):
     ''' ジェネレータオブジェクトの判定 '''
     return isinstance(obj, TypeGenerator)
-
-class MyTimer():
-    ''' StateMachineからの割り込みを使ったタイマー制御クラス '''
-    ONE_SHOT = const(0)
-    PERIODIC = const(1)
-
-    # 100クロックに一回、IRQを発生させる（実測した）
-    @rp2.asm_pio()
-    def irq_program():
-        irq(rel(0))     # IRQ 0 を発生
-        nop() [31]
-        nop() [31]
-        nop() [31]
-        nop() [2]
-        wrap()
-
-    def __init__(self, id=0) -> None:
-        self._id = id
-        self._callback = None
-        self._period = 0
-        self._counter = 0
-        self._mode = MyTimer.PERIODIC
-
-        # 周波数 100,000Hz なので、１クロックは 0.01msec
-        self.sm = rp2.StateMachine(self._id, MyTimer.irq_program, freq=100000)
-        self.sm.irq(self.__intercepter)
-
-
-    def __intercepter(self, sm):
-        ''' タイマー制御用callback関数 '''
-        _now = time.ticks_ms()
-        if time.ticks_diff(_now, self._spoint) >= self._period:
-            if self._mode == MyTimer.ONE_SHOT:
-                self.sm.active(0)   # ステートマシンを無効化
-            else:
-                self._spoint = _now
-            if self._callback:
-                self._callback(self)
-
-    def init(self, mode=PERIODIC, period=10, callback=None):
-        ''' タイマーを初期化する '''
-        assert callable(callback), "callback must be a callable object."
-        self._callback = callback
-
-        self._mode = mode
-        self._period = period
-        self._spoint = time.ticks_ms()
-
-        self.sm.active(1)  # ステートマシンを有効化
-
-    def deinit(self):
-        self.sm.active(0)
 
 class Edas():
     ''' 並行処理クラス '''
@@ -106,12 +58,7 @@ class Edas():
     SYNC = const(22)    # SYNCポイントに達した
     IEND = const(-1)    # タスク（ジェネレータ）が終了した
 
-    TIMER_ID = 0    # タイマーID
-    # if TIMER_ID == -1:
-    #     __timer = Timer(TIMER_ID)       # タイマーモジュール（仮想）
-    # else:
-    #     __timer = MyTimer(TIMER_ID)     # タイマーモジュール（StateMachine）
-
+    TIMER_ID = -1       # タイマーID
 
     __edata = []                # タスクのリスト
     __tdata = []                # 終了したタスクのリスト
@@ -123,6 +70,7 @@ class Edas():
     __is_loop_active = False    # イベントループが実行中か
     __tracelevel = 0            # トレースレベル
 
+    __in_Task = False           # タスク実行中か
     __ticks_ms = time.ticks_ms()    # handlerの現在のturnの開始時刻（同期用）
     __touched_point = __ticks_ms    # タスク実行ポイント（最後に BASICのタスクを実行した時刻）
     __taskidle_time_ms = 0          # タスクが実行されない時間（msef）
@@ -188,9 +136,10 @@ class Edas():
 
     @classmethod
     def __freeze_handler(cls, freezetime):
-        cls.__traceprint(11, "** freeze_handler ")
-        cls.__freezetime = min(freezetime, 20)
-        cls.__freezed = True
+        if not cls.__in_Task:   # タスク中は無効　20250731追加
+            cls.__traceprint(11, "** freeze_handler ")
+            cls.__freezetime = min(freezetime, 20)
+            cls.__freezed = True
 
     @classmethod
     def __defreeze_handler(cls):
@@ -218,6 +167,7 @@ class Edas():
             return
 
         # 事前処理 ----------------------------------------------------
+        cls.__in_Task = True
         cls.__traceprint(24, "alignment process.....")
         cls.__ticks_ms = time.ticks_ms()
 
@@ -294,6 +244,8 @@ class Edas():
         cls.__traceprint(28, f"  +   -- timespent={_timespent}")
         _period = max(cls.__interval - _timespent, cls.__interval_min)
 
+        cls.__in_Task = False
+
         if cls.__is_loop_active:
             timer.init(mode=Timer.ONE_SHOT, period=_period, callback=cls._handler)
         return
@@ -313,7 +265,7 @@ class Edas():
                 cls.__traceprint(8, "--> can't find**", fedas)
 
     @classmethod
-    def loop_start(cls, loop_interval=None, tracelevel=0, id=0):
+    def loop_start(cls, loop_interval=None, tracelevel=0):
         ''' イベントループを開始する '''
         if tracelevel is not None:
             cls.__tracelevel = tracelevel
@@ -323,13 +275,8 @@ class Edas():
             cls.__is_loop_active = True
             cls.__touched_point = cls.__ticks_ms    # タスク実行ポイントをセット
 
-            cls.TIMER_ID = id
             cls.__traceprint(11, f"Edas.loop_start {cls.TIMER_ID=}")
-            if cls.TIMER_ID == -1:
-                cls.__timer = Timer(cls.TIMER_ID)       # タイマーモジュール（仮想）
-            else:
-                cls.__timer = MyTimer(cls.TIMER_ID)     # タイマーモジュール（StateMachine）
-
+            cls.__timer = Timer(cls.TIMER_ID)       # タイマーモジュール
             cls.__timer.init(mode=Timer.ONE_SHOT, period=cls.__interval, callback=cls._handler)
 
     @classmethod
@@ -594,7 +541,7 @@ if __name__ == '__main__':
 
     print(__doc__)
     print(f"version = {__version__}")
-    Edas.loop_start(tracelevel=14, loop_interval=100, id=0)
+    Edas.loop_start(tracelevel=14, loop_interval=100)
     time.sleep(1)
 
     led1 = Pin(16, Pin.OUT)
