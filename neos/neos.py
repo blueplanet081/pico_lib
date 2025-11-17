@@ -206,7 +206,17 @@ def wlan_config(param=None):
 def set_ntp():
     ''' NTPサーバから時刻を取得して設定する '''
     wlan_connect()
-    ntptime.settime()
+
+    retry = 3
+    for i in range(retry):
+        try:
+            ntptime.settime()
+            break
+        except Exception as e:
+            time.sleep(1)
+    else:
+        print("Failed to set time from NTP server.")
+        return  
 
     for _ in range(5):
         t = get_localtime()
