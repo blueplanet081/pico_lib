@@ -1,0 +1,2 @@
+ssid = const("BCW710J-BDC0A-G")           # 接続するWi-FiのSSID
+passwd = const("ce55848c534ac")     # 接続するWi-Fiのパスワード
